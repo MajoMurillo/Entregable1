@@ -5,7 +5,8 @@ Integrantes
 3. Maria Herrara
 
 ## Seleccion del tema
-
+Unidad de analisis: provincias del Peru
+Hemos escogido la variable dependiente "Votos a Pedro Castillo"
 La variable dependiente se encuentra en **Variable Dependiente** donde "casti" representan los votos hacia Pedro Castillo, y "habil" los electores habiles a votar
 
 ## Variables independientes
