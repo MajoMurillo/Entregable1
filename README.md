@@ -4,10 +4,10 @@ Integrantes
 2. Angelo Palomino
 3. Maria Herrara
 
-##Seleccion del tema
+## Seleccion del tema
 
-##Variables independientes
-####MariaJose Murillo
+## Variables independientes
+#### MariaJose Murillo
 Las variables se encuentran en **Var independientes - Murillo**
 1. Variable independiente 1:
 *Energía o combustible que utiliza para cocinar: Gas (balón GLP) – “gas”*
@@ -19,6 +19,6 @@ Las variables se encuentran en **Var independientes - Murillo**
 3. Variable independiente 3:
 *Asiste a algún colegio, instituto o universidad – “acsedu”*
 
-####Angelo Palomino
+#### Angelo Palomino
 
-####Maria Herrada
+#### Maria Herrada
