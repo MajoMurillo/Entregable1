@@ -6,8 +6,11 @@ Integrantes
 
 ## Seleccion del tema
 Las elecciones son un proceso político, social y económico importante en las democracias, debido a que conlleva al cambio de poder en la esfera política. A partir de ello surge la interrogante sobre el comportamiento de los electores y que factores influyen en su voto. Por ello, nuestro trabajo busca entender el comportamiento electoral peruano durante las elecciones de la segunda vuelta entre Pedro Castillo y Keiko Fujimori
+
 Unidad de analisis: provincias del Peru
+
 Variable dependiente: "Votos a Pedro Castillo"
+
 La variable dependiente se encuentra en **Variable Dependiente** donde "casti" representan los votos hacia Pedro Castillo, y "habil" los electores habiles a votar
 
 ## Variables independientes
