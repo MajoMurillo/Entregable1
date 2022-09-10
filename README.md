@@ -1,8 +1,8 @@
 # Entregable1
 Integrantes
-1. MariaJose Murillo
-2. Angelo Palomino
-3. Maria Herrara
+1. MariaJose Murillo - 20193538
+2. Angelo Palomino - 20192234
+3. Maria Herrara - 20193696
 
 ## Seleccion del tema
 Las elecciones son un proceso político, social y económico importante en las democracias, debido a que conlleva al cambio de poder en la esfera política. A partir de ello surge la interrogante sobre el comportamiento de los electores y que factores influyen en su voto. Por ello, nuestro trabajo busca entender el comportamiento electoral peruano durante las elecciones de la segunda vuelta entre Pedro Castillo y Keiko Fujimori
