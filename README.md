@@ -5,8 +5,9 @@ Integrantes
 3. Maria Herrara
 
 ## Seleccion del tema
+Las elecciones son un proceso político, social y económico importante en las democracias, debido a que conlleva al cambio de poder en la esfera política. A partir de ello surge la interrogante sobre el comportamiento de los electores y que factores influyen en su voto. Por ello, nuestro trabajo busca entender el comportamiento electoral peruano durante las elecciones de la segunda vuelta entre Pedro Castillo y Keiko Fujimori
 Unidad de analisis: provincias del Peru
-Hemos escogido la variable dependiente "Votos a Pedro Castillo"
+Variable dependiente: "Votos a Pedro Castillo"
 La variable dependiente se encuentra en **Variable Dependiente** donde "casti" representan los votos hacia Pedro Castillo, y "habil" los electores habiles a votar
 
 ## Variables independientes
@@ -45,9 +46,18 @@ La variable sera extraida de **Ultimo nivel de estudios que aprobo (variable 3)*
 Esta variable se seleccionó porque muchas veces se ataca a las personas que votaron distinto a uno diciéndoles que no saber votar o no se informaron. bien. Es esta variable podemos ver cómo votan las personas con más preparación académica, para ver si realmente hay una diferencia o no. En otros estudios de comportamiento electoral se observaba, por ejemplo, que las personas con mayor nivel educativo suelen votar más por candidatos progresistas o de izquierda. Queremos ver si en Perú, a pesar de que ninguno de los dos candidatos es progresista, hay también esa significancia. 
 
 ### Maria Herrada
+Las tres variables se encuentran en **Variables independientes**
 #### 1. Variable independiente 1:
-**
+*Etnicidad (Ln)*
+
+Etnicidad será es una variable socio-demográfica y medirá el número de personas que tiene lengua materna indígena. Esta ya ha sido considerada en estudios previos sobre elecciones por los autores Sulmont, Ames y Ponce de León. La elección de esta variable responde a que muestra la cantidad de población que tiene tradición indígena, así mismo lo indígena ha estado asociado a carencias sociales y económica, y a discriminación y exclusión social (presentes durante la campaña electoral)
+
 #### 2. Variable independiente 2:
-**
+*Acceso al agua – (AgN)*
+
+La falta de servicio de agua (servicio público) correspondería a una necesidad básica insatisfecha (NBI) lo que también influye en la decisión electoral. Debido a que puede existir un mayor descontento social en los sectores que presentan un NBI.
+
 #### 3. Variable independiente 3:
-**
+*Alumbrado eléctrico (LuzN)*
+
+El alumbrado eléctrico es un servicio público necesario, la falta de esta muestra que existe un abandono por parte del Estado lo que conlleva al descontento de la población y de igual modo influye en la decisión electoral.  Además, está vinculada al nivel socioeconómico de la persona.
