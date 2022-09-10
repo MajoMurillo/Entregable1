@@ -10,7 +10,7 @@ La variable dependiente se encuentra en **Variable Dependiente** donde "casti" r
 
 ## Variables independientes
 ### MariaJose Murillo
-Las tres variables se encuentran en **Var independientes 123** de la informacion sacada del Censo 2017 
+Las tres variables se encuentran en **Var indepentdiente - gas sis edu** de la informacion sacada del Censo 2017 
 #### 1. Variable independiente 1:
 *Energía o combustible que utiliza para cocinar: Gas (balón GLP) – “gas”*
 
