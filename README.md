@@ -10,9 +10,7 @@ Integrantes
 #### MariaJose Murillo
 Las variables se encuentran en **Var independientes - Murillo**
 1. Variable independiente 1:
-
 *Energía o combustible que utiliza para cocinar: Gas (balón GLP) – “gas”*
-
 Se selecciono esta variable porque en el plan de gobierno presentado en la campaña presidencial se planteo cambios en el sector hidrocarburos, en especial en el tema del precio de los combustibles como lo es el gas GLP, en donde se expreso un compromiso con bajar su precio, el cual bordeaba los 60 soles,  con el fin de hacerlo mas accesible a la población tanto urbana como rural, propuesta la cual agrado a la ciudadanía
 
 2. Variable independiente 2:
