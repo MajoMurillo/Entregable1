@@ -11,7 +11,7 @@ Unidad de analisis: provincias del Peru
 
 Variable dependiente: "Votos a Pedro Castillo"
 
-La variable dependiente se encuentra en **Variable Dependiente** donde "casti" representan los votos hacia Pedro Castillo, y "habil" los electores habiles a votar
+La variable dependiente se encuentra en **Variable Dependiente** donde "casti" representan los votos hacia Pedro Castillo
 
 ## Variables independientes
 ### MariaJose Murillo
