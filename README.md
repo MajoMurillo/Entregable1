@@ -2,7 +2,7 @@
 Integrantes
 1. MariaJose Murillo - 20193538
 2. Angelo Palomino - 20192234
-3. Maria Herrara - 20193696
+3. Maria Herrera - 20193696
 
 ## Seleccion del tema
 Las elecciones son un proceso político, social y económico importante en las democracias, debido a que conlleva al cambio de poder en la esfera política. A partir de ello surge la interrogante sobre el comportamiento de los electores y que factores influyen en su voto. Por ello, nuestro trabajo busca entender el comportamiento electoral peruano durante las elecciones de la segunda vuelta entre Pedro Castillo y Keiko Fujimori
@@ -48,7 +48,7 @@ La variable sera extraida de **Ultimo nivel de estudios que aprobo (variable 3)*
 
 Esta variable se seleccionó porque muchas veces se ataca a las personas que votaron distinto a uno diciéndoles que no saber votar o no se informaron. bien. Es esta variable podemos ver cómo votan las personas con más preparación académica, para ver si realmente hay una diferencia o no. En otros estudios de comportamiento electoral se observaba, por ejemplo, que las personas con mayor nivel educativo suelen votar más por candidatos progresistas o de izquierda. Queremos ver si en Perú, a pesar de que ninguno de los dos candidatos es progresista, hay también esa significancia. 
 
-### Maria Herrada
+### Maria Herrera
 Las tres variables se encuentran en **Variables independientes**
 #### 1. Variable independiente 1:
 *Etnicidad (Ln)*
@@ -63,4 +63,6 @@ La falta de servicio de agua (servicio público) correspondería a una necesidad
 #### 3. Variable independiente 3:
 *Alumbrado eléctrico (LuzN)*
 
-El alumbrado eléctrico es un servicio público necesario, la falta de esta muestra que existe un abandono por parte del Estado lo que conlleva al descontento de la población y de igual modo influye en la decisión electoral.  Además, está vinculada al nivel socioeconómico de la persona.
+El alumbrado eléctrico es un servicio público necesario, la falta de esta muestra que existe un abandono por parte del Estado lo que conlleva al descontento de la población y de igual modo influye en la decisión electoral.  Además, está vinculada al nivel socioeconómico de la persona. 
+
+### Nueva variable independiente: Decidimos quedarnos con la variable *Asiste a algún colegio, instituto o universidad – “acsedu”*. En cambio, la otra variable la vamos a reemplazar por *El tipo de religión que profesa* . Esto se debe a que el Perú es de gran tradición católica; y, en las últimas décadas,  surgieron nuevos movimientos religiosas, como el mormon, el israelita o el evangelico. Por ello, no pocos candidatos ,en sus campañas políticas, intentan llamar a la moral y predicar el  “mensaje de Dios”. Además, los movimientos religiosos tienen un claro  tinte político conservador y, como muchos, anticomunista; por ello,  pensamos que pueden tener un peso en el comportamiento electoral. 
