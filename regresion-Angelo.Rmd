@@ -1,0 +1,108 @@
+```{r}
+library(rio)
+link="https://github.com/MajoMurillo/Estadistica2---Trabajo/blob/main/base%20de%20datos-Anelo.xlsx?raw=true"
+data=import(link)
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
+```{r}
+library(summarytools)
+library(kableExtra)
+
+dfSummary(data,
+          plain.ascii  = FALSE,
+          varnumbers = FALSE,
+          style        = "grid", 
+          graph.col=F,
+          na.col    = FALSE) %>%
+    kable(caption = "Descriptivos Univariados")%>%
+    kable_styling(full_width = F)
+```
+```{r}
+data$Provincia=as.factor(data$Provincia)
+```
+```{r}
+library(ggplot2)
+VarDep=data$casti
+descris=list(min=min(VarDep),
+             max=max(VarDep),
+             media=round(mean(VarDep),2),
+             var=round(var(VarDep),2),
+             asim=round(e1071::skewness(VarDep),2))
+
+base=ggplot(data=data, aes(x=casti)) + theme_classic()
+hist=base + geom_histogram(bins=50)
+histInfo=hist + annotate("text", x = 100 , y = 10 ,
+                         color='grey50',
+                       label = paste0("Minimo: ",descris$min))
+histInfo = histInfo + annotate("text", x = 100 , y = 80 ,
+                       color='grey50',
+                       label = paste0("Máximo: ",descris$max))
+
+histInfo = histInfo + annotate("text", x = 100 , y = 60 ,
+                       color='grey50',
+                       label = paste0("Media: ",descris$media))
+
+histInfo = histInfo + annotate("text", x = 100 , y = 40 ,
+                       color='grey50',
+                       label = paste0("Varianza: ",descris$var))
+
+histInfo = histInfo + annotate("text", x = 100 , y = 20 ,
+                       color='grey50',
+                       label = paste0("Sesgo: ",descris$asim))
+
+histInfo
+```
+```{r}
+h1=formula(data$casti~data$`Jóvenes (18 - 29 años)`+data$`Sí tiene conexión a internet`+data$`No tiene conexión a internet`+data$Ninguna+data$reliion)
+rp1=glm(h1, data=data, offset = log(data$habil), 
+        family = poisson(link = "log"))
+modelsPois=list('POISSON asegurados (I)'=rp1)
+library(modelsummary)
+modelsummary(modelsPois, 
+             title = "Regresiones Poisson anidadas",
+             stars = TRUE,
+             output = "kableExtra")
+```
+#
+```{r}
+overdispersion=AER::dispersiontest(rp1,alternative='greater')$ p.value<0.05
+underdispersion=AER::dispersiontest(rp1,alternative='less')$ p.value<0.05
+# tabla
+testResult=as.data.frame(rbind(overdispersion,underdispersion))
+names(testResult)='Es probable?'
+testResult%>%kable(caption = "Test de Equidispersión")%>%kableExtra::kable_styling()
+```
+
+
+#binomial
+```{r}
+h2off=formula(data$casti~data$`Jóvenes (18 - 29 años)`+data$`Sí tiene conexión a internet`+data$`No tiene conexión a internet`+data$Ninguna+data$reliion+ offset(log(habil)))
+library(MASS)
+rbn=MASS::glm.nb(h2off,data=data)
+summary(rbn)
+
+
+
+modelsQP_BN=list('Binomial Negativa asegurados (II)'=rbn)
+
+f <- function(x) format(x, digits = 4, scientific = FALSE)
+modelsummary(modelsQP_BN,fmt=f,
+             exponentiate = T, 
+             statistic = 'conf.int',
+             title = "EXP() de la Regresiones Poisson, Quasi Poisson  y Binomial Negativa",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
