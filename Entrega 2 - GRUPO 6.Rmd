@@ -1,0 +1,648 @@
+---
+title: "Regresion - Entrega 2"
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+date: "2022-10-06"
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# Regresion - MARIAJOSE MURILLO
+
+En el 2021 fueron las elecciones presidenciales, cuya segunda vuelta fue
+disputada por Keiko Fujimori y Pedro Castillo, donde resulto ganador el
+segundo, sin embargo, que variables pudieron influenciar en su victoria?
+
+-   "dep": departamento del Peru
+-   "prov": provincia del Peru
+-   "habil": electores habiles - tambien se usara como variable de
+    control
+
+#### Variable dependiente:
+
+"casti": votos a Pedro Castillo
+
+#### Variables independientes:
+
+"gas": personas con acceso a gas GLP
+
+"sis": personas con acceso al seguro de salud
+
+"acsedu": personas con acceso a la educacion
+
+Primero veamos los contenidos:
+
+```{r}
+rm(list = ls()) 
+knitr::knit_hooks$set(inline = as.character)
+
+gitLink="https://github.com/MajoMurillo/Estadistica2---Trabajo/blob/main/dataCGSE.xlsx?raw=true"
+dataCGSE=rio::import(gitLink)
+
+library(magrittr)
+dataCGSE%>%
+    rmarkdown::paged_table()
+```
+
+Vemos que toda las variables son numericas a excepcion de "departamento"
+y "provincia" por lo que primero se optara por una **regresion lineal**
+
+```{r}
+str(dataCGSE)
+```
+
+Nuestra primera hipotesis es: **A nivel provincial, la cantidad de
+personas que votaron por Pedro Castillo estara afectada por si usan gas
+GLP**
+
+```{r}
+library(knitr)
+library(modelsummary)
+
+h1=formula(casti~gas)
+
+rl1=lm(h1, data = dataCGSE)
+
+model1=list('OLS votantes de Castillo (1)'=rl1)
+modelsummary(model1, title = "Tabla 1: Resumen de Regresion Lineal",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+Como vemos en la Tabla 1, el predictor covariado (gas) salio con un
+valor negativo y no significativo (ya que sale sin asteriscos), mientras
+que su R2 ajustado sale tambien con valores negativos. Sin embargo no
+nos da un buen ajuste y dificilmente puede ser util :
+
+```{r}
+par(mfrow = c(2, 2))  
+plot(rl1, 1,caption = '');title(main="Linealidad")
+plot(rl1, 2, caption = '');title(main="Normalidad")
+plot(rl1, 3, caption = '');title(main="Homocedasticidad")
+plot(rl1, 5, caption = '');title(main="Influyentes")
+```
+
+Para mejorar este modelo, podemos incluir la variable de control
+("habil")
+
+```{r}
+library(knitr)
+library(modelsummary)
+
+h1control=formula(casti~gas + habil)
+
+rl2=lm(h1control, data = dataCGSE)
+
+modelslm=list('OLS votantes de Castillo (1)'=rl1,'OLS votantes de Castillo (2'=rl2)
+modelsummary(modelslm, title = "Regresiones Lineales",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+Se presenta una mejora en el R2 ajustado
+
+```{r}
+par(mfrow = c(2, 2))  
+plot(rl2, 1,caption = '');title(main="Linealidad")
+plot(rl2, 2, caption = '');title(main="Normalidad")
+plot(rl2, 3, caption = '');title(main="Homocedasticidad")
+plot(rl2, 5, caption = '');title(main="Influyentes")
+```
+
+Para entender mejor la naturaleza de la variable, hacemos un grafico de
+barras
+
+```{r}
+library(ggplot2)
+VarProv=dataCGSE$casti
+descris=list(min=min(VarProv),
+             max=max(VarProv),
+             media=round(mean(VarProv),2),
+             var=round(var(VarProv),2),
+             asim=round(e1071::skewness(VarProv),2))
+
+base=ggplot(data=dataCGSE, aes(x=casti)) + theme_classic()
+hist=base + geom_histogram(bins=50)
+histInfo=hist + annotate("text", x = 100000, y = 150,
+                         color='grey50',
+                       label = paste0("Minimo: ",descris$min))
+histInfo = histInfo + annotate("text", x = 100000, y = 150,
+                       color='grey50',
+                       label = paste0("Máximo: ",descris$max))
+
+histInfo = histInfo + annotate("text", x = 100000, y = 140,
+                       color='grey50',
+                       label = paste0("Media: ",descris$media))
+
+histInfo = histInfo + annotate("text", x = 100000, y = 130,
+                       color='grey50',
+                       label = paste0("Varianza: ",descris$var))
+
+histInfo = histInfo + annotate("text", x = 100000, y =120,
+                       color='grey50',
+                       label = paste0("Sesgo: ",descris$asim))
+
+histInfo
+```
+
+Nos muestra un distribucion con sesgo positivo, recordandonos que
+nuestra variable dependiente representa valores enteros positivos
+
+## REGRESION POISSON
+
+Comparamos el resultado de la regresion lineal anterior controlada por
+los electores habiles con la regresion Poisson
+
+```{r}
+rp1=glm(h1, data = dataCGSE, 
+        offset=log(habil),  
+        family = poisson(link = "log"))
+
+# displaying results
+modelslmpoi=list('OLS votantes de Castillo (2)'=rl2,
+                 'POISSON votantes de Castillo'=rp1)
+
+modelsummary(modelslmpoi, title = "Regresiones OLS y Poisson",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+Alteraremos nuestra primera hipotesis, siendo ahora: **A nivel
+provincial, la cantidad de personas que votaron por Pedro Castillo esta
+afectada por si cuentan con gas GLP, seguro de salud y acceso a la
+educacion**
+
+```{r}
+h2=formula(casti ~ gas+sis+acsedu)
+    
+rp2=glm(h2, data = dataCGSE, offset=log(habil),
+        family = poisson(link = "log"))
+
+
+modelsPois=list('POISSON votantes de Castillo (1)'=rp1,
+                'POISSON votantes de Castillo (2)'=rp2)
+modelsummary(modelsPois, 
+             title = "Regresiones Poisson anidadas",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+## Equidispersion
+
+Uno de los supuestos en la Regresión Poisson es que la media y la
+varianza sean iguales.
+
+```{r}
+overdispersion=AER::dispersiontest(rp2,alternative='greater')$ p.value<0.05
+underdispersion=AER::dispersiontest(rp2,alternative='less')$ p.value<0.05
+# tabla
+testResult=as.data.frame(rbind(overdispersion,underdispersion))
+names(testResult)='Es probable?'
+testResult%>%kable(caption = "Test de Equidispersión")%>%kableExtra::kable_styling()
+```
+
+Haciendo la equidispersion nos damos cuenta que es improbable que la
+varianza sea igual a la media, por lo que intentaremos hacer la Quasi
+Poisson para tratar la presencia de la sobredispersion
+
+## REGRESION QUASIPOISSON
+
+```{r}
+rqp = glm(h2, data = dataCGSE, offset=log(habil),
+          family = quasipoisson(link = "log"))
+
+modelsPQP=list('POISSON votantes de Castillo (2)'=rp2, 'QUASIPOISSON votantes de Castillo'=rqp)
+
+modelsummary(modelsPQP, title = "Regresion Poisson y QuasiPoisson",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+Nos muestra que los coeficientes son los mismos para ambos modelos.
+
+Sin embargo (por recomendacion del profesor), usaremos la regresion
+Binomial Negativa como otra forma de tratar la sobredispersion, ademas
+porque es la mas utilizada para estos casos
+
+## REGRESION BINOMIAL NEGATIVA
+
+```{r}
+h2off=formula(casti~gas + sis + acsedu + offset(log(habil)))
+rbn=MASS::glm.nb(h2off,data=dataCGSE)
+
+summary(rbn)
+modelsQP_BN=list('POISSON votantes de Castillo (2)'=rp2,
+                 'QuasiPoisson votantes de Castillo (2)'=rqp,
+                 'Binomial Negativa votantes de Castillo (2)'=rbn)
+
+f <- function(x) format(x, digits = 4, scientific = FALSE)
+modelsummary(modelsQP_BN,fmt=f,
+             exponentiate = T, 
+             statistic = 'conf.int',
+             title = "EXP() de la Regresiones Poisson, Quasi Poisson  y Binomial Negativa",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+# Comparacion de modelos
+
+Usamos anova para la comparacion
+
+```{r}
+anova(rp2,rqp,rbn, test = "Chisq") %>%
+kable(caption = "Tabla ANOVA para comparar modelos")%>%kableExtra::kable_styling(full_width = FALSE)
+```
+
+```{r}
+library(ggplot2)
+dotwhisker::dwplot(list(Poisson=rqp,CuasiPoisso=rqp,BinomialNegativa=rbn),exp=T) + scale_y_discrete(labels=c("gas","seguro de salud", "acceso a educacion")) + scale_color_discrete(name="Modelos para:\nVotantes por Pedro Castillo") + geom_vline(
+           xintercept = 1,
+           colour = "grey60",
+           linetype = 2
+       )
+```
+
+.
+
+.
+
+# Regresion - MARIA HERRARA
+
+```{r}
+library(rio)
+lkXLSX="https://github.com/MajoMurillo/Estadistica2---Trabajo/blob/main/indeppp.xlsx?raw=true"
+indps=import(lkXLSX)
+```
+
+```{r}
+lkXLSY="https://github.com/MajoMurillo/Estadistica2---Trabajo/raw/main/dependiente2.csv"
+dep=import(lkXLSY)
+```
+
+```{r}
+str(dep)
+```
+
+```{r}
+dep$casti=as.numeric(dep$casti)
+```
+
+```{r}
+dep$habil=as.numeric(dep$habil)
+```
+
+```{r}
+hist(dep$casti)
+```
+
+Vemos que tiene una asimetría positiva marcada
+
+```{r}
+indps$Código=NULL
+```
+
+```{r}
+library(stringr)
+library(magrittr) # para %>%
+indps$depar=str_split(string = indps$Provincia,
+                         pattern = ', provincia:',
+                         simplify = T)[,1]
+
+indps$provin=str_split(string = indps$Provincia,
+                          pattern = ', provincia:',
+                          simplify = T)[,2]
+```
+
+```{r}
+indps$Provincia=NULL
+```
+
+```{r}
+indps=indps[,c(10:16)]
+```
+
+```{r}
+dep$Provincia =trimws(dep$Provincia,which=c("both"),whitespace = "[\\h\\v]") # el espacio en blanco se determina "\\h\\v", o también "\t\r\n"
+```
+
+```{r}
+indps$provin =trimws(indps$prov,which=c("both"),whitespace = "[\\h\\v]") # el espacio en blanco se determina "\\h\\v", o también "\t\r\n"
+```
+
+```{r}
+names(indps)[7]=c("Provincia")
+```
+
+```{r}
+str(dep)
+```
+
+```{r}
+indps=indps[,c(7,6,1:5)]
+```
+
+```{r}
+basefinal=merge(indps,dep)
+```
+
+```{r}
+str(basefinal)
+```
+
+```{r}
+names(basefinal)
+```
+
+Número de personas que votaron por Castillo --\> VD Personas que tienen
+Luz electrica en casa --\> VI Personas que tienen Agua en casa --\> VI
+Etniticidad --\>VI
+
+Regresión:
+
+A nivel provincial, el voto hacia el postulante a presidencia Castillo
+está afectada por el acceso a bienes básicos como luz
+
+```{r}
+library(knitr)
+library(modelsummary)
+
+h1=formula(casti~Luz)
+
+rl1=lm(h1, data = basefinal)
+
+model1=list('OLS asegurados (I)'=rl1)
+modelsummary(model1, title = "Resumen de Regresion Lineal",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+```{r}
+summary(rl1)
+```
+
+Vemos que la variable se valida (p-value menor a 0.05) y el R es alto,
+pero hacemos más pruebas, por ello procedemos a los supuestos:
+
+```{r}
+par(mfrow = c(2, 2))  
+plot(rl1, 1,caption = '');title(main="Linealidad")
+plot(rl1, 2, caption = '');title(main="Normalidad")
+plot(rl1, 3, caption = '');title(main="Homocedasticidad")
+plot(rl1, 5, caption = '');title(main="Influyentes")
+```
+
+Vemos que la linealidad esta cayendo, igualmente vemos casos atípicos y
+la homocedasticidad no cumple la recta. Por lo tanto vemos que los
+supuestos de la RLM caen.
+
+Agregamos la variable habil(como variable control y hacemos otro RLM):
+
+```{r}
+library(knitr)
+library(modelsummary)
+
+h1control=formula(casti~Luz + habil)
+
+rl2=lm(h1control, data = basefinal)
+
+modelslm=list('OLS votos casti (I)'=rl1,'OLS votos casti (II)'=rl2)
+modelsummary(modelslm, title = "Regresiones Lineales",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+Aunque el poder explicativo no aumento, podemos ver una posible
+multicolinealidad.
+
+```{r}
+par(mfrow = c(2, 2))  
+plot(rl2, 1,caption = '');title(main="Linealidad")
+plot(rl2, 2, caption = '');title(main="Normalidad")
+plot(rl2, 3, caption = '');title(main="Homocedasticidad")
+plot(rl2, 5, caption = '');title(main="Influyentes")
+```
+
+Vemos que aún fallan los supuestos , por lo que procedemos a hacer una
+revisión gráfica:
+
+```{r}
+hist(basefinal$casti)
+```
+
+```{r}
+summary(basefinal$casti)
+```
+
+Es histograma de la Figura 1.3 nos muestra una distrubución con
+asimetría positiva. Ello nos hace reflexionar que nuestra variable
+dependiente representa conteos, valores enteros positivos. La regresión
+lineal tendrá problemas pues asume que la variable dependiente tiene
+valores reales y no acotados. Por lo que procedemos a trabajar con
+Poisson. Además la media y la mediana no son iguales por lo que
+tendremos que ver el caso de equidispersión.
+
+```{r}
+rp1=glm(h1, data = basefinal, 
+        offset=log(habil), #exposure 
+        family = poisson(link = "log"))
+
+# displaying results
+modelslmpoi=list('OLS  (II)'=rl2,
+                 'POISSON '=rp1)
+
+modelsummary(modelslmpoi, title = "Regresiones OLS y Poisson",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+```{r}
+par(mfrow = c(1, 2))  # divide screen 1 row 2 columns
+plot(basefinal$casti,fitted(rp1),ylim=c(0,365000));title(main="Original versus Poisson")
+plot(basefinal$casti,fitted(rl2),ylim=c(0,365000));title(main="Original versus OLS \ncontrolando población")
+```
+
+```{r}
+names(basefinal)
+```
+
+```{r}
+h2=formula(casti~Luz + AgS + Ln)
+    
+rp2=glm(h2, data = basefinal, offset=log(habil),
+        family = poisson(link = "log"))
+
+
+modelsPois=list('POISSON votos casti (I)'=rp1,
+                'POISSON votos casti (II)'=rp2)
+modelsummary(modelsPois, 
+             title = "Regresiones Poisson anidadas",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+```{r}
+overdispersion=AER::dispersiontest(rp2,alternative='greater')$ p.value<0.05
+underdispersion=AER::dispersiontest(rp2,alternative='less')$ p.value<0.05
+# tabla
+testResult=as.data.frame(rbind(overdispersion,underdispersion))
+names(testResult)='Es probable?'
+testResult%>%kable(caption = "Test de Equidispersión")%>%kableExtra::kable_styling()
+```
+
+Hay sobredispersión por lo que procedemos a usar la binomial negativa.
+
+```{r}
+rqp = glm(h2, data = basefinal, offset=log(habil),
+          family = quasipoisson(link = "log"))
+
+modelsPQP=list('POISSON votos casti (II)'=rp2,'QUASIPOISSON votos casti (II)'=rqp)
+
+modelsummary(modelsPQP, title = "Regresiones Poisson y QuasiPoisson",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+```{r}
+library(arm)
+cbind(coefPoi=coef(rp2),coefQuasiPoi=coef(rqp))
+```
+
+```{r}
+cbind(sePoi=se.coef(rp2),seQuasiPoi=se.coef(rqp))
+```
+
+```{r}
+summary(rqp)$dispersion; summary(rp2)$dispersion
+```
+
+```{r}
+modelsQPexp=list('QuasiPoisson votos casti (II) exponenciado'=rqp)
+
+f <- function(x) format(x, digits = 4, scientific = FALSE)
+modelsummary(modelsQPexp,fmt=f,
+             exponentiate = T, 
+             statistic = 'conf.int',
+             title = "EXP() de la Regresión Quasi Poisson (II) para Interpretación",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+```{r}
+h2off=formula(casti~ + Luz+ Ln+ AgS + offset(log(habil)))
+rbn=glm.nb(h2off,data=basefinal)
+
+modelsQP_BN=list('Poisson asegurados (II)'=rp2,
+                 'QuasiPoisson asegurados (II)'=rqp,
+                 'Binomial Negativa asegurados (II)'=rbn)
+
+f <- function(x) format(x, digits = 4, scientific = FALSE)
+modelsummary(modelsQP_BN,fmt=f,
+             exponentiate = T, 
+             statistic = 'conf.int',
+             title = "EXP() de la Regresiones Poisson, Quasi Poisson  y Binomial Negativa",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+```{r}
+anova(rp2,rqp,rbn, test = "Chisq") %>%
+kable(caption = "Tabla ANOVA para comparar modelos")%>%kableExtra::kable_styling(full_width = FALSE)
+```
+
+.
+
+.
+
+# Regresion - ANGELO PALOMINO
+
+```{r}
+library(rio)
+link="https://github.com/MajoMurillo/Estadistica2---Trabajo/blob/main/base%20de%20datos-Anelo.xlsx?raw=true"
+data=import(link)
+```
+
+```{r}
+library(summarytools)
+library(kableExtra)
+dfSummary(data,
+          plain.ascii  = FALSE,
+          varnumbers = FALSE,
+          style        = "grid", 
+          graph.col=F,
+          na.col    = FALSE) %>%
+    kable(caption = "Descriptivos Univariados")%>%
+    kable_styling(full_width = F)
+```
+
+```{r}
+data$Provincia=as.factor(data$Provincia)
+```
+
+```{r}
+library(ggplot2)
+VarDep=data$casti
+descris=list(min=min(VarDep),
+             max=max(VarDep),
+             media=round(mean(VarDep),2),
+             var=round(var(VarDep),2),
+             asim=round(e1071::skewness(VarDep),2))
+base=ggplot(data=data, aes(x=casti)) + theme_classic()
+hist=base + geom_histogram(bins=50)
+histInfo=hist + annotate("text", x = 100 , y = 10 ,
+                         color='grey50',
+                       label = paste0("Minimo: ",descris$min))
+histInfo = histInfo + annotate("text", x = 100 , y = 80 ,
+                       color='grey50',
+                       label = paste0("Máximo: ",descris$max))
+histInfo = histInfo + annotate("text", x = 100 , y = 60 ,
+                       color='grey50',
+                       label = paste0("Media: ",descris$media))
+histInfo = histInfo + annotate("text", x = 100 , y = 40 ,
+                       color='grey50',
+                       label = paste0("Varianza: ",descris$var))
+histInfo = histInfo + annotate("text", x = 100 , y = 20 ,
+                       color='grey50',
+                       label = paste0("Sesgo: ",descris$asim))
+histInfo
+```
+
+```{r}
+h1=formula(data$casti~data$`Jóvenes (18 - 29 años)`+data$`Sí tiene conexión a internet`+data$`No tiene conexión a internet`+data$Ninguna+data$reliion)
+rp1=glm(h1, data=data, offset = log(data$habil), 
+        family = poisson(link = "log"))
+modelsPois=list('POISSON asegurados (I)'=rp1)
+library(modelsummary)
+modelsummary(modelsPois, 
+             title = "Regresiones Poisson anidadas",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+```{r}
+overdispersion=AER::dispersiontest(rp1,alternative='greater')$ p.value<0.05
+underdispersion=AER::dispersiontest(rp1,alternative='less')$ p.value<0.05
+# tabla
+testResult=as.data.frame(rbind(overdispersion,underdispersion))
+names(testResult)='Es probable?'
+testResult%>%kable(caption = "Test de Equidispersión")%>%kableExtra::kable_styling()
+```
+
+#binomial
+
+```{r}
+h2off=formula(data$casti~data$`Jóvenes (18 - 29 años)`+data$`Sí tiene conexión a internet`+data$`No tiene conexión a internet`+data$Ninguna+data$reliion+ offset(log(habil)))
+library(MASS)
+rbn=MASS::glm.nb(h2off,data=data)
+summary(rbn)
+modelsQP_BN=list('Binomial Negativa asegurados (II)'=rbn)
+f <- function(x) format(x, digits = 4, scientific = FALSE)
+modelsummary(modelsQP_BN,fmt=f,
+             exponentiate = T, 
+             statistic = 'conf.int',
+             title = "EXP() de la Regresiones Poisson, Quasi Poisson  y Binomial Negativa",
+             stars = TRUE,
+             output = "kableExtra")
+```
