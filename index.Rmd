@@ -1,0 +1,468 @@
+#CODIGO DE LIMPIEZA: ANGELO
+```{r}
+library(rio)
+library(htmltab)
+
+depe=import("https://github.com/MajoMurillo/Estadistica2---Trabajo/blob/main/vardepe.xlsx?raw=true")
+
+```
+#eliminar columas 
+```{r}
+depe[,c(1,4,5,6,7,8,9,10,11,13,15)]=NULL
+```
+#cambiar nombres de las filas:
+```{r}
+newNames=c('prov','electores','partido','votoscas')
+names(depe)=newNames
+```
+#filtrar las filas y crear una nueva base de datos
+```{r}
+library(dplyr)
+depe=filter(depe,partido=="PARTIDO POLITICO NACIONAL PERU LIBRE")
+depe[,c(3)]=NULL
+```
+
+#variables indepe 1
+```{r}
+inde1=import("https://github.com/MajoMurillo/Estadistica2---Trabajo/blob/main/variables%20independientes/Angelo/variable1.xlsx?raw=true")
+```
+#elimiar columnas 
+```{r}
+inde1[,c(1,2,4,5,6,7,8,10,11,12)]=NULL
+```
+#filtrar las filas y crear una nueva base de datos
+```{r}
+inde1=filter(inde1,!is.na(inde1$...3))
+```
+#cambiar nombres de las filas:
+```{r}
+newNames1=c('prov','poblacion')
+names(inde1)=newNames1
+```
+#volver a filtrar fila
+```{r}
+inde1=inde1[-1,]
+```
+#variables indepe 2
+```{r}
+inde2=import("https://github.com/MajoMurillo/Estadistica2---Trabajo/blob/main/variables%20independientes/Angelo/variable2.xlsx?raw=true")
+
+```
+#elimiar columnas 
+```{r}
+inde2[,c(1,2,4,5)]=NULL
+```
+#filtrar las filas y crear una nueva base de datos
+```{r}
+inde2=filter(inde2,!is.na(inde2$...3))
+inde2=inde2[-1,]
+```
+#cambiar nombres de las filas:
+```{r}
+newNames3=c('prov','sabe leer','no sabe')
+names(inde2)=newNames3
+```
+
+#variables indepe 3
+```{r}
+inde3=import("https://github.com/MajoMurillo/Estadistica2---Trabajo/blob/main/variables%20independientes/Angelo/variable3.xlsx?raw=true")
+```
+#elimiar columnas 
+```{r}
+inde3[,c(1,2)]=NULL
+```
+#filtrar las filas y crear una nueva base de datos
+```{r}
+inde3=filter(inde3,!is.na(inde3$...3))
+inde3=inde3[-1,]
+```
+#cambiar la forma
+```{r}
+str(inde3)
+inde3$...4=as.numeric(inde3$...4)
+inde3$...5=as.numeric(inde3$...5)
+inde3$...6=as.numeric(inde3$...6)
+inde3$...7=as.numeric(inde3$...7)
+inde3$...8=as.numeric(inde3$...8)
+inde3$...9=as.numeric(inde3$...9)
+inde3$...10=as.numeric(inde3$...10)
+inde3$...11=as.numeric(inde3$...11)
+```
+#sumar las columnas y crear una nueva
+```{r}
+inde3$suma=rowSums(inde3[,c(2,3,4,6,7,8,9)],na.rm = TRUE)
+```
+#elimiar las que sumamos
+```{r}
+inde3[,c(2,3,4,6,7,8,9)]=NULL
+```
+#cambiar nombres de las colum:
+```{r}
+newNames4=c('prov','no tiene rel','si tiene rel')
+names(inde3)=newNames4
+```
+
+```{r}
+b1 = merge(inde1,inde2)
+b2 = merge(b1,inde3)
+```
+#limpiar la base
+```{r}
+library(stringr)
+b2$prov=str_split(string = b2$prov,
+                          pattern = ':',
+                          simplify = T)[,2]
+b2$prov=toupper(b2$prov)
+```
+```{r}
+b2$prov =trimws(b2$prov,which=c("right"),whitespace = "[\\h\\v]")
+b2$prov =trimws(b2$prov,which=c("left"),whitespace = "[\\h\\v]")
+
+```
+```{r}
+setdiff(b2$prov,depe$prov)
+
+```
+```{r}
+setdiff(depe$prov, b2$prov )
+
+```
+```{r}
+library(stringi)
+
+b2$prov=stri_trans_general(str = b2$prov, 
+                               id = "Latin-ASCII")
+```
+
+```{r}
+b2[9,1] ="ANTONIO RAIMONDI"
+b2[94,1]="MARAÑON"
+b2[100,1]="NASCA"
+b2[125,1]="FERREÑAFE"
+b2[130,1]="CAÑETE"
+b2[138,1]="DATEM DEL MARAÑON"
+b2[145,1]="MANU"
+b2[146,1]="TAHUAMANU"
+b2[147,1]="TAMBOPATA"
+b2[162,1]="CALLAO"
+
+
+
+
+
+```
+
+
+
+
+
+```{r}
+data = merge(b2,depe)
+
+```
+
+
+
+#regresion
+```{r}
+library(summarytools)
+library(kableExtra)
+
+dfSummary(data,
+          plain.ascii  = FALSE,
+          varnumbers = FALSE,
+          style        = "grid", 
+          graph.col=F,
+          na.col    = FALSE) %>%
+    kable(caption = "Descriptivos Univariados")%>%
+    kable_styling(full_width = F)
+```
+```{r}
+data$poblacion=as.numeric(data$poblacion)
+data$`sabe leer`=as.numeric(data$`sabe leer`)
+data$`no sabe`=as.numeric(data$`no sabe`)
+```
+```{r}
+library(ggplot2)
+VarDep=data$votoscas
+descris=list(min=min(VarDep),
+             max=max(VarDep),
+             media=round(mean(VarDep),2),
+             var=round(var(VarDep),2),
+             asim=round(e1071::skewness(VarDep),2))
+
+base=ggplot(data=data, aes(x=votoscas)) + theme_classic()
+hist=base + geom_histogram(bins=50)
+histInfo=hist + annotate("text", x = 100 , y = 10 ,
+                         color='grey50',
+                       label = paste0("Minimo: ",descris$min))
+histInfo = histInfo + annotate("text", x = 100 , y = 80 ,
+                       color='grey50',
+                       label = paste0("Máximo: ",descris$max))
+
+histInfo = histInfo + annotate("text", x = 100 , y = 60 ,
+                       color='grey50',
+                       label = paste0("Media: ",descris$media))
+
+histInfo = histInfo + annotate("text", x = 100 , y = 40 ,
+                       color='grey50',
+                       label = paste0("Varianza: ",descris$var))
+
+histInfo = histInfo + annotate("text", x = 100 , y = 20 ,
+                       color='grey50',
+                       label = paste0("Sesgo: ",descris$asim))
+
+histInfo
+```
+#vemos que tiene sesgo positivo de la variable
+#por lo que hacemos la poisson
+```{r}
+h1=formula(data$votoscas~data$poblacion+data$`sabe leer`+ data$`no sabe`+data$`no tiene rel`+data$`si tiene rel`)
+rp1=glm(h1, data=data, offset = log(data$electores), 
+        family = poisson(link = "log"))
+modelsPois=list('POISSON asegurados (I)'=rp1)
+library(modelsummary)
+modelsummary(modelsPois, 
+             title = "Regresiones Poisson anidadas",
+             stars = TRUE,
+             output = "kableExtra")
+```
+#analizamos la dispersion
+```{r}
+overdispersion=AER::dispersiontest(rp1,alternative='greater')$ p.value<0.05
+underdispersion=AER::dispersiontest(rp1,alternative='less')$ p.value<0.05
+# tabla
+testResult=as.data.frame(rbind(overdispersion,underdispersion))
+names(testResult)='Es probable?'
+testResult%>%kable(caption = "Test de Equidispersión")%>%kableExtra::kable_styling()
+```
+
+#vemos que hay overdispersion, por lo que hacemos binomial
+#binomial
+```{r}
+h2off=formula(data$votoscas~data$poblacion+data$`sabe leer`+ data$`no sabe`+data$`no tiene rel`+data$`si tiene rel`+ offset(log(data$electores)))
+library(MASS)
+rbn=MASS::glm.nb(h2off,data=data)
+summary(rbn)
+
+
+
+modelsQP_BN=list('Binomial Negativa asegurados (II)'=rbn)
+
+f <- function(x) format(x, digits = 4, scientific = FALSE)
+modelsummary(modelsQP_BN,fmt=f,
+             exponentiate = T, 
+             statistic = 'conf.int',
+             title = "EXP() de la Regresiones Poisson, Quasi Poisson  y Binomial Negativa",
+             stars = TRUE,
+             output = "kableExtra")
+```
+#vemos que ninguna variable es significativa 
+
+#MARIAJOSE MURILLO
+
+```{r, echo=FALSE}
+rm(list = ls()) 
+knitr::knit_hooks$set(inline = as.character)
+gitLink="https://github.com/MajoMurillo/Estadistica2---Trabajo/raw/main/variables%20independientes/Majo/cleandataMurillo.csv"
+depindepMajo=rio::import(gitLink)
+
+library(magrittr)
+depindepMajo%>%
+   rmarkdown::paged_table()
+```
+
+## 1. Análisis rápido de la data
+
+## 2. Modelación
+En este caso, se hará una regresión Binomianl Negativa
+
+```{r}
+library(knitr)
+library(modelsummary)
+h2off=formula(casti~gas + sis + acsedu + offset(log(habil)))
+rbn=MASS::glm.nb(h2off,data=depindepMajo)
+
+summary(rbn)
+```
+
+Al analizar los tres factores en el mismo modelo, ninguno tiene un efecto significativo positivo en los votos a Peru Libre en las Elecciones Presidenciales 2021 segunda vuelta.
+
+#MARIA HERRERA
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+##Introducción##
+La siguiente investigación analiza los factores que pueden influir en el voto hacia el candidato Castillo durante la segunda vuelta electoral  (información recolectada de la ONPE).Se trabajará así con la variable dependiente "votoscas".
+
+```{r}
+library(rio)
+library(htmltab)
+
+merge=import("https://raw.githubusercontent.com/MajoMurillo/Estadistica2---Trabajo/main/cleandataa.csv")
+```
+
+##Primer grupo de factores- Maria Herrera"
+A partir de la revisión biliográfica se sostiene que existen tres factores principales que podrían influir en el voto, Etnicidad, acceso al agua y alumbrado eléctrico.
+
+##Modelación 
+En este caso se trabajará con una binomial negativa 
+
+
+vemos las variables :
+
+```{r}
+str(merge)
+```
+Cambiamos a numérica
+```{r}
+merge$Ag=as.numeric(merge$Ag)
+merge$AgN=as.numeric(merge$AgN)
+merge$Luz=as.numeric(merge$Luz)
+merge$LuzN=as.numeric(merge$LuzN)
+merge$Ln=as.numeric(merge$Ln)
+merge$LnN=as.numeric(merge$LnN)
+merge$gas=as.numeric(merge$gas)
+merge$sis=as.numeric(merge$sis)
+merge$acsedu=as.numeric(merge$acsedu)
+merge$poblacion=as.numeric(merge$poblacion)
+
+merge$votoscas=as.numeric(merge$votoscas)
+merge$electores=as.numeric(merge$electores)
+merge$`si tiene rel`=as.numeric(merge$`si tiene rel`)
+merge$`no tiene rel`=as.numeric(merge$`no tiene rel`)
+merge$`no sabe`= as.numeric(merge$`no sabe`)
+merge$`sabe leer`=as.numeric(merge$`sabe leer`)
+
+```
+
+Graficamos y observamos:
+```{r}
+hist(merge$votoscas)
+```
+Vemos una asimetría positiva por lo que trabajamos con OLS
+
+
+Vemos la equidispersion para si usar una binomial negativa o una quasi poison. 
+```{r}
+h2=formula(votoscas~ +LuzN + LnN + AgN )
+    
+rp2=glm(h2, data = merge, offset=log(electores),
+        family = poisson(link = "log"))
+```
+
+
+```{r}
+overdispersion=AER::dispersiontest(rp2,alternative='greater')$ p.value<0.05
+underdispersion=AER::dispersiontest(rp2,alternative='less')$ p.value<0.05
+```
+```{r}
+testResult=as.data.frame(rbind(overdispersion,underdispersion))
+names(testResult)='Es probable?'
+testResult
+```
+Vemos que es altamente improbable que la varianza sea igual a la media, por lo que se opta por aceptar que lo más probable es que tengamos sobredispersión  y procedemos a trabajar con una binomail negativa 
+
+BINOMIAL NEGATIVA:
+
+```{r}
+library(knitr)
+library(modelsummary)
+h2off=formula(votoscas~LuzN + LnN + AgN + offset(log(electores)))
+rbn=MASS::glm.nb(h2off,data=merge)
+
+summary(rbn)
+```
+
+Al analizar la data vemos que el no tener acceso a la luz y agua son variables significativas, mientras que la etnicidad no parece tener significancia.
+
+Procedemos a hacer una regresión binomial negativa a las variables aisladas para observar si son significativas por sí solas.
+
+##Acceso al agua (AgN)
+
+```{r}
+h2off=formula(votoscas~AgN + offset(log(electores)))
+rbn=MASS::glm.nb(h2off,data=merge)
+
+summary(rbn)
+```
+Como vemos el no tener acceso al agua es significativa (0.00274) por sí sola
+
+##Aceso al alumbrado eléctrico (LuzN)
+```{r}
+h2off=formula(votoscas~LuzN + offset(log(electores)))
+rbn=MASS::glm.nb(h2off,data=merge)
+
+summary(rbn)
+```
+Tener acceso a alumbrado electrico deja de ser significativo si es que se toma sola (0.281)
+
+##Etnicidad
+```{r}
+h2off=formula(votoscas~LnN + offset(log(electores)))
+rbn=MASS::glm.nb(h2off,data=merge)
+
+summary(rbn)
+```
+No ser parte de un grupo etnico es sugnificativo en el voto a castillo (0.00665)
+
+##ANALISIS FACTORIAL##
+
+```{r}
+library(polycor)
+corMatrix=polycor::hetcor(merge)$correlations
+```
+```{r}
+dontselect=c("prov", "votoscas","electores")
+select=setdiff(names(merge), dontselect)
+DL=merge[,select]
+```
+
+Exploramos la matriz de correlación 
+```{r}
+library(polycor)
+corL=polycor::hetcor(DL)$correlations
+```
+```{r}
+library(ggcorrplot)
+ggcorrplot(corL)
+```
+
+Podemos ver en el gráfico que hay una correlación muy fuerte entre las variables , por lo que procedemos al análisis factorial 
+
+
+```{r}
+library(psych)
+psych::KMO(corL)
+```
+El overall es mayor a 0.6 por lo que el tamaño de los datos es suficiente para la factorización. Las variables son fuertes.
+
+##Verificamos datos ##
+
+Hnula: La matriz de correlacion es una matriz identidad
+
+```{r}
+cortest.bartlett(corL,n=nrow(DL))$p.value>0.05
+```
+La matriz no se parece a una matriz de identidad
+
+##Matriz singular 
+Hnula: La matriz de correlacion es una matriz singular
+
+```{r}
+library(matrixcalc)
+
+is.singular.matrix(corL)
+```
+La matriz es singular (no se puede invertir) por lo que no se puede seguir con el análisis factorial.
+ 
+
