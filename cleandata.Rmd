@@ -131,7 +131,6 @@ inde3$suma=rowSums(inde3[,c(4:11)],na.rm = TRUE)
 #porcentaje
 ```{r}
 inde3$noTieneRel=inde3$...7/inde3$suma
-
 ```
 
 #elimiar columnas
@@ -147,53 +146,6 @@ names(inde3)=newNames4
 # (corregido)mismo comentario que la variable anterior
 # (corregido)En general, recuerden que DEBEN ESPECIFICAR CUÁL ES CADA VARIABLE. Ejemplo:
 1. Variable independiente 1: Porcentaje de personas que saben leer 
-
-
-
-
-# Les recomiendo poner primero el código de limpieza de todas las variables antes del merge.
-#
-```{r}
-b1 = merge(inde1,inde2)
-b2 = merge(b1,inde3)
-
-
-  
-library(stringr)
-b2$prov=str_split(string = b2$prov,
-                          pattern = ':',
-                          simplify = T)[,2]
-b2$prov=toupper(b2$prov)
- 
-b2$prov =trimws(b2$prov,which=c("right"),whitespace = "[\\h\\v]")
-b2$prov =trimws(b2$prov,which=c("left"),whitespace = "[\\h\\v]")
- 
- 
-setdiff(b2$prov,depe$prov)
- 
- 
-setdiff(depe$prov, b2$prov )
- 
-library(stringi)
-b2$prov=stri_trans_general(str = b2$prov, 
-                               id = "Latin-ASCII")
-  
-b2[9,1] ="ANTONIO RAIMONDI"
-b2[94,1]="MARAÑON"
-b2[100,1]="NASCA"
-b2[125,1]="FERREÑAFE"
-b2[130,1]="CAÑETE"
-b2[138,1]="DATEM DEL MARAÑON"
-b2[145,1]="MANU"
-b2[146,1]="TAHUAMANU"
-b2[147,1]="TAMBOPATA"
-b2[162,1]="CALLAO"
-```
-
-
-
-
-
 
 #CODIGO DE LIMPIEZA: MAJO
 ```{r}
@@ -292,79 +244,8 @@ acsedu[,c(1,3,4,5)]=NULL
 names(acsedu)= c("prov", "acsedu")
 ```
 
-
-
-
-
-
-
-### Merge de las variables independientes
-
-```{r}
-str(sis)
-```
-
-```{r}
-setdiff(gas$Prov, sis$Prov)
-```
-
-```{r}
-sisgas=merge(gas, sis)
-head(sisgas)
-```
-
-```{r}
-setdiff(sisgas$Prov, acsedu$Prov)
-```
-
-```{r}
-indepMajo=merge(sisgas, acsedu)
-head(indepMajo)
-```
-
-
-#CAMIAMOS LOS NOMBRES: 
-```{r}
-library(stringr)
-indepMajo$prov=str_split(string = indepMajo$prov,
-                          pattern = ':',
-                          simplify = T)[,2]
-indepMajo$prov=toupper(indepMajo$prov)
-indepMajo$prov =trimws(indepMajo$prov,which=c("right"),whitespace = "[\\h\\v]")
-indepMajo$prov =trimws(indepMajo$prov,which=c("left"),whitespace = "[\\h\\v]")
-
-library(stringi)
-
-indepMajo$prov=stri_trans_general(str = b2$prov, 
-                               id = "Latin-ASCII")
-```
-
-#MERGE FINAL
- 
-```{r}
-newNames5=c('prov','gas','sis','acsedu')
-names(indepMajo)=newNames5
-```
-
-```{r}
-indepMajo[130,1]="CAÑETE"
-indepMajo[94,1]="MARAÑON"
-indepMajo[138,1]="DATEM DEL MARAÑON"
-indepMajo[125,1]="FERREÑAFE"
-```
-
-```{r}
-datafinal1=merge(indepMajo,b2)
-```
-
-
-
-
-
-
-
-
-#LIMPIEZA DE BASE: MARIA1) Importamos la data 
+#LIMPIEZA DE BASE: MARIA 
+1) Importamos la data 
 VARIABLE INDEPENDIENTE
 ```{r}
 library(rio)
@@ -395,48 +276,31 @@ etniticidad=import(lkXLSX)
 alumbrado[,c(1,2)]=NULL
 ```
 
-- Eliminar filas 
+Eliminar filas 
 ```{r}
-alumbrado=alumbrado[-c(1,2,3,4,5),]
+alumbrado=filter(alumbrado,!is.na(alumbrado$...3))
+alumbrado=alumbrado[-c(1),]
+
 ```
 
 - cambiamos nombres `
 
 VI: ALUMBRADO
 
-```{r}
-names(alumbrado)
-```
-
 Cambiamos el nombre:
 
 ```{r}
-names=c('Prov','Luz','LuzN')
+names=c('prov','Luz','LuzN')
 names(alumbrado)=names 
 ```
-
-Eliminar filas 
-```{r}
-alumbrado=filter(alumbrado,!is.na(alumbrado$Prov))
-```
-
-
-```{r}
-names(alumbrado)
-```
+#formatear
 
 ```{r}
 str(alumbrado)
-```
-
-```{r}
 alumbrado$Luz=as.numeric(alumbrado$Luz)
 alumbrado$LuzN=as.numeric(alumbrado$LuzN)
 ```
 
-```{r}
-str(alumbrado)
-```
 
 ```{r}
 alumbrado$total=rowSums(alumbrado[,c(2,3)],na.rm = TRUE)
@@ -455,29 +319,19 @@ alumbrado[,c(2,3,4)]=NULL
 ```{r}
 agua[,c(1,2)]=NULL
 ```
-- Eliminamos filas 
+Eliminamos filas y casos perdidos
 ```{r}
-agua=agua[-c(1,2,3,4,5),]
+agua=filter(agua,!is.na(agua$...3))
+agua=agua[-c(1),]
+
 ```
 - Cambiamos el nombre:
+
 ```{r}
-names(agua)
-```
-```{r}
-names1=c('Prov','Ag','AgN')
+names1=c('prov','Ag','AgN')
 names(agua)=names1 
 ```
 
-Borramos datos perdidos 
-```{r}
-agua=filter(agua,!is.na(agua$Prov))
-```
-
-Vemos 
-
-```{r}
-str(agua)
-```
 Volvemos numérica
 ```{r}
 agua$Ag=as.numeric(agua$Ag)
@@ -506,29 +360,15 @@ etniticidad[,c(1,2)]=NULL
 
 -Eliminamos filas 
 ```{r}
-etniticidad=etniticidad[-c(1,2,3,4,5),]
+etniticidad=filter(etniticidad,!is.na(etniticidad$...3))
+
+etniticidad=etniticidad[-c(1),]
 ```
 
 - pasamos a numérica 
 ```{r}
-etniticidad$...4=as.numeric(etniticidad$...4)
-etniticidad$...5=as.numeric(etniticidad$...5)
-etniticidad$...6=as.numeric(etniticidad$...6)
-etniticidad$...7=as.numeric(etniticidad$...7)
-etniticidad$...8=as.numeric(etniticidad$...8)
-etniticidad$...9=as.numeric(etniticidad$...9)
-etniticidad$...10=as.numeric(etniticidad$...10)
-etniticidad$...11=as.numeric(etniticidad$...11)
-etniticidad$...12=as.numeric(etniticidad$...12)
-etniticidad$...13=as.numeric(etniticidad$...13)
-etniticidad$...14=as.numeric(etniticidad$...14)
-
-```
-
-Borramos datos perdidos 
-
-```{r}
-etniticidad=filter(etniticidad,!is.na(etniticidad$...3))
+etniticidad[,2:12]=lapply(etniticidad[,2:12],as.numeric)
+str(etniticidad)
 ```
 
 SUMAMOS las columnas:
@@ -545,14 +385,10 @@ etniticidad[,c(2:12)]=NULL
 
 Renombramos 
 ```{r}
-names2=c('Prov','Ln','LnN')
+names2=c('prov','Ln','LnN')
 names(etniticidad)=names2 
-
 ```
-
-```{r}
-str(etniticidad)
-```
+#porcentaje
 
 ```{r}
 etniticidad$total=rowSums(etniticidad[,c(2,3)],na.rm = TRUE)
@@ -563,79 +399,81 @@ etniticidad$etniticidad=etniticidad$Ln/etniticidad$total
 etniticidad[,c(2,3,4)]=NULL
 ```
 
-
-
-
-
-
 #UNIMOS LAS BASES DE LAS VI 
+### Merge de las variables independientes
+
+
+```{r}
+setdiff(gas$prov, sis$prov)
+sisgas=merge(gas, sis)
+
+```
+
+```{r}
+setdiff(sisgas$prov, acsedu$prov)
+```
+
+```{r}
+indepMajo=merge(sisgas, acsedu)
+head(indepMajo)
+```
+
 ```{r}
 Basefinal=merge(agua,alumbrado)
 ```
-
 ```{r}
 Basefinal1=merge(Basefinal,etniticidad)
 ```
-
-
-Cambiamos el nombre a la primera variable 
 ```{r}
-names3=c('prov','agua','alumbrado','etnicidad')
+b1 = merge(inde1,inde2)
+b2 = merge(b1,inde3)
+```
+```{r}
+b3=merge(b2,Basefinal1)
+data=merge(b3,indepMajo)
 ```
 
-```{r}
-names(Basefinal1)=names3 
-```
 
 Limpiamos la base de datos- cambio de nombre:
 ```{r}
 library(stringr)
-Basefinal1$prov=str_split(string = Basefinal1$prov,
+data$prov=str_split(string = Basefinal1$prov,
                           pattern = ':',
                           simplify = T)[,2]
-Basefinal1$prov=toupper(Basefinal1$prov)
+data$prov=toupper(data$prov)
 ```
 
 ```{r}
-Basefinal1$prov =trimws(Basefinal1$prov,which=c("right"),whitespace = "[\\h\\v]")
-Basefinal1$prov =trimws(Basefinal1$prov,which=c("left"),whitespace = "[\\h\\v]")
+data$prov =trimws(data$prov,which=c("right"),whitespace = "[\\h\\v]")
+data$prov =trimws(data$prov,which=c("left"),whitespace = "[\\h\\v]")
 ```
- 
-#MERGE FINAL:
+#unir la data de las independientes con la dependiente 
 ```{r}
-setdiff(Basefinal1$prov,datafinal1$prov)
-setdiff(datafinal1$prov,Basefinal1$prov)
-```
-
-```{r}
+setdiff(data$prov,depe$prov)
 library(stringi)
-
-Basefinal1$prov=stri_trans_general(str = Basefinal1$prov, 
+data$prov=stri_trans_general(str = data$prov, 
+                               id = "Latin-ASCII")
+depe$prov=stri_trans_general(str = depe$prov, 
                                id = "Latin-ASCII")
 ```
 
 ```{r}
-Basefinal1[9,1]="ANTONIO RAIMONDI"
-Basefinal1[94,1]="MARAÑON"
-Basefinal1[100,1]="NASCA"
+data[9,1]="ANTONIO RAIMONDI"
+data[100,1]="NASCA"
 
-Basefinal1[125,1]="FERREÑAFE"
-Basefinal1[130,1]="CAÑETE"
-Basefinal1[138,1]="DATEM DEL MARAÑON"
-Basefinal1[145,1]="MANU"
-Basefinal1[146,1]="TAHUAMANU"
-Basefinal1[147,1]="TAMBOPATA"
-Basefinal1[162,1]="CALLAO"
+data[145,1]="MANU"
+data[146,1]="TAHUAMANU"
+data[147,1]="TAMBOPATA"
+data[162,1]="CALLAO"
 ```
 
 
 ```{r}
-basedatos=merge(Basefinal1,datafinal1)
+base=merge(data,depe)
 ```
 
 
 ```{r}
 library(rio)
-export(basedatos, "cleandatafinal.csv")
+export(base, "cleandatafinal.csv") 
 ```
-
