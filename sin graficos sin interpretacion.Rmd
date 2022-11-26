@@ -1,0 +1,370 @@
+---
+title: "AAAA"
+output: html_document
+date: "2022-11-26"
+---
+[poner logo de pucp xd]
+## Introducción
+
+La siguiente investigación analiza los factores que pueden el voto a Pedro Castillo en la segunda vuelta de las elecciones 2021.
+
+Se medido a travez de las variables: acceso al gas, si tienen seguro de salud, acceso a la educacion, poblacion segun ciclo de vida, si cuenta con acceso a internet, tipo de religion, etnicidad, acceso al agua y acceso a alumbrado electrico
+
+```{r echo=FALSE}
+library(httr)    
+set_config(use_proxy(url="10.3.100.207",port=8080))
+```
+
+```{r, echo=FALSE}
+library(rio)
+library(rlang)
+rm(list = ls()) 
+knitr::knit_hooks$set(inline = as.character)
+gitLink="https://github.com/MajoMurillo/Estadistica2---Trabajo/raw/main/cleandatafinal.csv"
+cleandata=rio::import(gitLink)
+cleandata$electores=as.numeric(cleandata$electores)
+cleandata$votoscas=as.numeric(cleandata$votoscas)
+
+library(magrittr)
+cleandata%>%
+   rmarkdown::paged_table()
+```
+
+## Análisis rápido de la data
+
+### Modelación
+
+En este caso, se hará una regresión Binomial Negativa
+
+#### BINOMIAL - variables Angelo
+
+```{r echo=FALSE}
+library(knitr)
+library(modelsummary)
+h2off=formula(votoscas~poblacionjoven + sabeleer + noTieneRel + offset(log(electores)))
+rbn=MASS::glm.nb(h2off,data=cleandata)
+summary(rbn)
+```
+
+#### BINOMIAL - variables Majo
+
+```{r echo=FALSE}
+library(knitr)
+library(modelsummary)
+h2off=formula(votoscas~gas + sis + acsedu + offset(log(electores)))
+rbn=MASS::glm.nb(h2off,data=cleandata)
+summary(rbn)
+```
+
+#### BINOMIAL - variables Maria
+
+```{r echo=FALSE}
+library(knitr)
+library(modelsummary)
+h2off=formula(votoscas~agua + alumbrado + etniticidad + offset(log(electores)))
+rbn=MASS::glm.nb(h2off,data=cleandata)
+summary(rbn)
+```
+
+### BINOMIAL - TODAS LAS VARIABLES
+
+```{r echo=FALSE}
+library(knitr)
+library(modelsummary)
+h2off=formula(votoscas~gas + sis + acsedu + poblacionjoven + sabeleer + noTieneRel + agua + alumbrado + etniticidad + offset(log(electores)))
+rbn=MASS::glm.nb(h2off,data=cleandata)
+summary(rbn)
+```
+
+#PONER QUE SIGNIFICAAAAAAAAAAAAAAAAAAAAAAAA
+
+## Analisis Factorial Exploratorio (EFA)
+
+El análisis factorial exploratorio (Watkins 2018), como su nombre indica, explora la data y nos entrega posibles factores que resúmen cada uno un conjunto de variables.
+
+Veamos los pasos que el EFA requiere:
+
+1.  Subsetear la data
+
+```{r echo=FALSE}
+dontselect=c("prov", "votoscas","electores", "porcentaje")
+select=setdiff(names(cleandata), dontselect)
+EFA=cleandata[,select]
+```
+
+2.  Calculo de matriz de correlacion
+
+```{r echo=FALSE}
+library(polycor)
+corMatrix=polycor::hetcor(EFA)$correlations
+```
+
+3.  Exploramos la matriz de correlación
+
+```{r echo=FALSE}
+library(ggcorrplot)
+ggcorrplot(corMatrix)
+```
+
+4.  Verificar si los datos permiten factorizar:
+
+```{r echo=FALSE}
+library(psych)
+psych::KMO(corMatrix)
+```
+
+5.  Verificar si la matriz de correlaciones es adecuada
+
+```{r echo=FALSE}
+cortest.bartlett(corMatrix,n=nrow(EFA))$p.value>0.05
+
+library(matrixcalc)
+is.singular.matrix(corMatrix)
+
+```
+
+6.  Determinar en cuantos factores o variables latentes podríamos redimensionar la data:
+
+```{r echo=FALSE}
+fa.parallel(EFA, fa = 'fa',correct = T,plot = F)
+```
+
+7.  Redimensionar a número menor de factores
+
+-   Resultado inicial
+
+```{r echo=FALSE}
+library(GPArotation)
+resfa <- fa(EFA,
+            nfactors = 4,
+            cor = 'mixed',
+            rotate = "varimax",
+            fm="minres")
+print(resfa$loadings)
+```
+
+-   Resultado mejorado:
+
+```{r echo=FALSE}
+print(resfa$loadings,cutoff = 0.5)
+```
+
+### Resultado visual del Analisis Factorial
+
+```{r echo=FALSE}
+fa.diagram(resfa,main = "Resultados del EFA")
+```
+
+8.  Evaluando Resultado obtenido:
+
+-   Qué variables aportaron mas a los factores?
+
+```{r echo=FALSE}
+sort(resfa$communality)
+```
+
+-   ¿Qué variables contribuyen a más de un factor?
+
+```{r echo=FALSE}
+sort(resfa$complexity)
+```
+
+9.  Valores proyectados: Podemos calcular dos indices que resuman los dos factores encontrados.
+
+```{r echo=FALSE}
+library(magrittr)
+as.data.frame(resfa$scores)%>%head()
+```
+
+```{r echo=FALSE}
+cleandata$uno_efa=resfa$scores[,1]
+cleandata$dos_efa=resfa$scores[,2]
+cleandata$tres_efa=resfa$scores[,3]
+cleandata$tres_efa=resfa$scores[,4]
+
+ggplot(data=cleandata,aes(x=electores,y=uno_efa)) + geom_point() + theme_minimal() + labs(x="original", y="EFA")
+```
+
+```{r echo=FALSE}
+library(BBmisc)
+boxplot(normalize(cleandata[,c(2:10)],method='range',range=c(0,10)))
+```
+
+## Correlacion
+
+```{r echo=FALSE}
+cor(cleandata[,c(2:10)])
+```
+
+#### Preparacion de datos para la clusterizacion
+
+```{r echo=FALSE}
+dataClus=cleandata[,c(2:10)]
+row.names(dataClus)=cleandata$prov
+```
+
+```{r echo=FALSE}
+library(cluster)
+g.dist = daisy(dataClus, metric="gower")
+```
+
+
+
+
+
+
+#PAM
+
+```{r echo=FALSE}
+library(factoextra)
+fviz_nbclust(dataClus, pam,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F)
+```
+
+```{r echo=FALSE}
+set.seed(123)
+res.pam=pam(g.dist,3,cluster.only = F)
+
+#nueva columna
+dataClus$pam=res.pam$cluster
+
+# ver
+library(kableExtra)
+head(dataClus,15)%>%kbl()%>%kable_styling()
+```
+
+```{r echo=FALSE}
+fviz_silhouette(res.pam,print.summary = F)
+```
+
+```{r echo=FALSE}
+silPAM=data.frame(res.pam$silinfo$widths)
+silPAM$prov=row.names(silPAM)
+elecPAM=silPAM[silPAM$sil_width<0,'prov']%>%sort()
+elecPAM
+```
+
+Exploremos el promedio de cada cluster:
+
+```{r echo=FALSE}
+aggregate(.~ pam, data=dataClus,mean)
+```
+
+```{r echo=FALSE}
+cleandata$pamCleanElec=cleandata$prov%in%elecPAM
+cleandata$pamClean=as.ordered(dataClus$pam)
+dataClus$pam=NULL
+```
+
+
+
+
+
+
+
+
+
+
+
+##AGNES
+```{r echo=FALSE}
+fviz_nbclust(dataClus, hcut,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F,hc_func = "agnes")
+```
+
+```{r echo=FALSE}
+set.seed(123)
+library(factoextra)
+
+res.agnes<- hcut(g.dist, k = 3,hc_func='agnes',hc_method = "ward.D")
+
+dataClus$agnes=res.agnes$cluster
+
+# ver
+
+head(dataClus,15)%>%kbl()%>%kable_styling()
+```
+
+```{r echo=FALSE}
+fviz_dend(res.agnes, cex = 0.7, horiz = T,main = "")
+```
+
+```{r echo=FALSE}
+fviz_silhouette(res.agnes,print.summary = F)
+```
+
+```{r echo=FALSE}
+silAGNES=data.frame(res.agnes$silinfo$widths)
+silAGNES$prov=row.names(silAGNES)
+elecAGNES=silAGNES[silAGNES$sil_width<0,'prov']%>%sort()
+elecAGNES
+```
+```{r echo=FALSE}
+aggregate(.~ agnes, data=dataClus,mean)
+```
+
+```{r echo=FALSE}
+cleandata$agnesCleanElec=cleandata$prov%in%elecAGNES
+cleandata$agnesClean=as.ordered(dataClus$agnes)
+dataClus$agnes=NULL
+```
+
+
+##Comparando
+```{r echo=FALSE}
+table(cleandata$pamClean,cleandata$agnesClean,dnn = c('Particion','Aglomeracion'))
+```
+
+
+
+#### Visualizacion comparativa
+
+```{r echo=FALSE}
+proyeccion = cmdscale(g.dist, k=2,add = T) 
+head(proyeccion$points,20)
+```
+
+```{r echo=FALSE}
+cleandata$dim1 <- proyeccion$points[,1]
+cleandata$dim2 <- proyeccion$points[,2]
+```
+
+```{r echo=FALSE}
+library(ggrepel)
+base= ggplot(cleandata,aes(x=dim1, y=dim2,label=row.names(dataClus))) 
+base + geom_text_repel(size=1.5, max.overlaps = 50,min.segment.length = unit(0, 'lines'))
+```
+
+##GRAFICA PAM
+
+```{r echo=FALSE}
+# solo provincias mal clusterizadas
+PAMlabels=ifelse(cleandata$pamCleanElec,cleandata$prov,'')
+
+#base
+base= ggplot(cleandata,aes(x=dim1, y=dim2))  +
+    scale_color_brewer(type = 'qual',palette ='Dark2'  ) + labs(subtitle = "Se destacan las provincias mal clusterizadas")
+
+pamPlot=base + geom_point(size=2, 
+                          aes(color=pamClean))  + 
+        labs(title = "PAM") 
+# hacer notorios las provincias mal clusterizadas
+pamPlot + geom_text_repel(size=2,
+                          aes(label=PAMlabels),
+                          max.overlaps = 50,
+                          min.segment.length = unit(0, 'lines'))
+```
+
+##GRAFICA AGNES
+
+```{r echo=FALSE}
+# solo paises mal clusterizados
+AGNESlabels=ifelse(cleandata$agnesCleanElec,cleandata$prov,'')
+
+agnesPlot=base + geom_point(size=2, 
+                            aes(color=as.factor(agnesClean))) +
+          labs(title = "AGNES") 
+# hacer notorios las provincias mal clusterizadas
+agnesPlot + geom_text_repel(size=2,
+                            aes(label=AGNESlabels),
+                            max.overlaps = 50,
+                            min.segment.length = unit(0, 'lines'))
+```
