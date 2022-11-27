@@ -1,6 +1,6 @@
 # Influencia de voto a Pedro Castillo en la 2nda vuelta
 
-**LINK DE LA PAGINA WEB: https://github.com/MajoMurillo/Estadistica-Proyecto**
+**Link de contingencia por si el link de este repositorio no abre: https://github.com/MajoMurillo/Estadistica-Proyecto**
 
 Integrantes
 1. MariaJose Murillo - 20193538
