@@ -1,4 +1,4 @@
-# Entregable1
+# Influencia de voto a Pedro Castillo en la 2nda vuelta
 Integrantes
 1. MariaJose Murillo - 20193538
 2. Angelo Palomino - 20192234
@@ -9,10 +9,13 @@ Las elecciones son un proceso político, social y económico importante en las d
 
 Unidad de analisis: provincias del Peru
 
+
 Variable dependiente: "Votos a Pedro Castillo"
 
 La variable dependiente se encuentra en **Variable Dependiente** donde "casti" representan los votos hacia Pedro Castillo
+
 Mientras que "habil" se usara como **variable de control**
+
 
 ## Variables independientes
 ### MariaJose Murillo
@@ -45,9 +48,9 @@ La variable sera extraida de **Si cuenta con acceso a internet (variable 2)**
 Esta variable se seleccionó porque la campaña electoral, en especial en la segunda vuelta, fue sobre todo a través en las plataformas virtuales. Candidatos de la derecha utilizaron este medio para difundir sus propuestas y ataques contra su contrincante. Por otro lado, los votantes de izquierda usaron los mismos medios para organizarse y apoyar a su candidato. Además, las restricciones de la pandemia aún seguían vigentes, por lo que fueron muchos los candidatos que tuvieron que salir de la campana electoral tradicional y pasar a una completamente virtual
 
 #### 3. Variable independiente 3:
-La variable sera extraida de **Ultimo nivel de estudios que aprobo (variable 3)**
+La variable sera extraida de **El tipo de religión que profesa* (variable 3)**
 
-Esta variable se seleccionó porque muchas veces se ataca a las personas que votaron distinto a uno diciéndoles que no saber votar o no se informaron. bien. Es esta variable podemos ver cómo votan las personas con más preparación académica, para ver si realmente hay una diferencia o no. En otros estudios de comportamiento electoral se observaba, por ejemplo, que las personas con mayor nivel educativo suelen votar más por candidatos progresistas o de izquierda. Queremos ver si en Perú, a pesar de que ninguno de los dos candidatos es progresista, hay también esa significancia. 
+Esto se debe a que el Perú es de gran tradición católica; y, en las últimas décadas,  surgieron nuevos movimientos religiosas, como el mormon, el israelita o el evangelico. Por ello, no pocos candidatos ,en sus campañas políticas, intentan llamar a la moral y predicar el  “mensaje de Dios”. Además, los movimientos religiosos tienen un claro  tinte político conservador y, como muchos, anticomunista; por ello,  pensamos que pueden tener un peso en el comportamiento electoral. 
 
 ### Maria Herrera
 Las tres variables se encuentran en **Variables independientes**
@@ -66,7 +69,3 @@ La falta de servicio de agua (servicio público) correspondería a una necesidad
 
 El alumbrado eléctrico es un servicio público necesario, la falta de esta muestra que existe un abandono por parte del Estado lo que conlleva al descontento de la población y de igual modo influye en la decisión electoral.  Además, está vinculada al nivel socioeconómico de la persona. 
 
-### Nueva variable independiente: 
-*El tipo de religión que profesa*
-
-Decidimos quedarnos con la variable *Asiste a algún colegio, instituto o universidad – “acsedu”*. En cambio, la otra variable la vamos a reemplazar por *El tipo de religión que profesa* . Esto se debe a que el Perú es de gran tradición católica; y, en las últimas décadas,  surgieron nuevos movimientos religiosas, como el mormon, el israelita o el evangelico. Por ello, no pocos candidatos ,en sus campañas políticas, intentan llamar a la moral y predicar el  “mensaje de Dios”. Además, los movimientos religiosos tienen un claro  tinte político conservador y, como muchos, anticomunista; por ello,  pensamos que pueden tener un peso en el comportamiento electoral. 
