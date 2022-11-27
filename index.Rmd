@@ -1,0 +1,606 @@
+---
+title: "Análisis de los factores que influyen en el voto a Pedro Castillo"
+author: "MariaJose Murillo, Maria Herrera"
+date: "2022-2"
+subtitle: 'Curso: POL304 - Estadística para el análisis político 2'
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+    toc: true
+---
+```{r,echo=FALSE, out.width="40%",fig.align="center"}
+knitr::include_graphics("logoPUCP.png") 
+```
+
+
+## Introducción
+
+Las elecciones son un proceso político, social y económico importante en las democracias, debido a que conlleva al cambio de poder en la esfera política. A partir de ello surge la interrogante sobre el comportamiento de los electores y que factores influyen en su voto. Por ello, nuestro trabajo busca entender el comportamiento electoral peruano durante las elecciones de la segunda vuelta entre Pedro Castillo y Keiko Fujimori. Así, el trabajo de investigación presentado analizará los factores que pueden influir en el voto hacia el candidato Castillo durante la segunda vuelta de las elecciones 2021 (información recolectada de la ONPE y el CENSO).
+
+Las variables con las que se trabaja para explicar este fenómeno son: acceso al gas, si tienen seguro de salud, acceso a la educación, poblacion según ciclo de vida, si cuenta con acceso a internet, tipo de religión, etnicidad, acceso al agua y acceso a alumbrado eléctrico. Además, tendremos como unidad de análisis a las provincias del Perú.
+
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(ggplot2)
+PROVINEI=sf::read_sf("provinei.shp")
+ggplot(PROVINEI) + geom_sf()
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(rio)
+library(htmltab)
+depen=import("https://github.com/MajoMurillo/Estadistica2---Trabajo/blob/main/vardepe.xlsx?raw=true")
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+depen[,c(4,5,6,7,8,9,10,11,13)]=NULL
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+newNames=c('departamento','prov','electores','partido','votos','porcentaje')
+names(depen)=newNames
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(dplyr)
+library(geometry)
+library(ggplot2)
+depen=filter(depen,partido=="PARTIDO POLITICO NACIONAL PERU LIBRE")
+depen[,c(4)]=NULL
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+ELMAPA=merge(PROVINEI,depen,by.x='NOMBPROV',by.y='prov', all.x = T)
+head(ELMAPA)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+mapaleyendaL= ggplot(ELMAPA)+ geom_sf() + theme_light()
+
+mapaleyL= mapaleyendaL + geom_sf(data=ELMAPA,
+              aes(fill=porcentaje),color = NA)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+mapa3= mapaleyL +
+coord_sf() + 
+scale_fill_gradient(low = "seashell",  high = "firebrick", breaks=seq(from=0, to=1, by=.10)) + theme_void() + 
+  
+theme(axis.title = element_blank(), axis.text = element_blank(), legend.position = c(1.1,0.55)) + labs(fill=" ") + theme(legend.text = element_text(size = 13)) +
+  
+labs(title = "% de votos válidos por Perú Libre", subtitle = "Escala del 0 al 1",caption = "Fuente: INEI") +
+  
+theme(
+plot.title = element_text(color="black", size=15, face="bold"),
+plot.caption = element_text(color = "black", size=10))
+
+```
+
+```{r echo=FALSE,message=FALSE,warning=FALSE,eval=TRUE,fig.show='hold',fig.width=8,fig.height=7}
+mapa3
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(httr)    
+set_config(use_proxy(url="10.3.100.207",port=8080))
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(rio)
+library(rlang)
+rm(list = ls()) 
+knitr::knit_hooks$set(inline = as.character)
+gitLink="https://github.com/MajoMurillo/Estadistica2---Trabajo/raw/main/cleandatafinal.csv"
+cleandata=rio::import(gitLink)
+cleandata$electores=as.numeric(cleandata$electores)
+cleandata$votoscas=as.numeric(cleandata$votoscas)
+
+library(magrittr)
+cleandata%>%
+   rmarkdown::paged_table()
+```
+
+## Análisis rápido de la data
+
+### Modelación
+
+En este caso, se hará una regresión Binomial Negativa
+
+### BINOMIAL - variables Angelo
+
+Se trabajará con tres variables explicativas: población según ciclo de vida ("poblacionjoven"), si no tiene religión ("noTieneRel")y el último nivel de estudios que aprobó ("sabeleer").
+
+La primerra variable es **población joven** que la escogimos porque durante los analices de encuestas, se suele diferenciar marcadamente que hay un "voto joven". Así se le llama comúnmente al voto de los jóvenes de entre 18 a 19 años. Incluso, los candidatos suelen presentar propuestas exclusivamente para este grupo de electores. Por eso mismo, se seleccionó esta variable independiente para poder ver si realmente hay un mayor apoyo a cierto candidato si hay mayor población joven.
+
+La segunda variable **si no tiene religión** la escogimos porque el Perú es de gran tradición católica; y, en las últimas décadas, surgieron nuevos movimientos religiosas, como el mormon, el israelita o el evangelico. Por ello, no pocos candidatos ,en sus campañas políticas, intentan llamar a la moral y predicar el "mensaje de Dios". Además, los movimientos religiosos tienen un claro tinte político conservador y, como muchos, anticomunista; por ello, pensamos que pueden tener un peso en el comportamiento electoral.
+
+La tercera variable **si sabe o no leer** se escogio porque muchas veces se ataca a las personas que votaron distinto a uno diciéndoles que no saber votar o no se informaron. bien. Es esta variable podemos ver cómo votan las personas con más preparación académica, para ver si realmente hay una diferencia o no. En otros estudios de comportamiento electoral se observaba, por ejemplo, que las personas con mayor nivel educativo suelen votar más por candidatos progresistas o de izquierda. Queremos ver si en Perú, a pesar de que ninguno de los dos candidatos es progresista, hay también esa significancia.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+library(modelsummary)
+h2off=formula(votoscas~poblacionjoven + sabeleer + noTieneRel + offset(log(electores)))
+rbn=MASS::glm.nb(h2off,data=cleandata)
+summary(rbn)
+```
+
+En esta regresión las variables que aparecen como significativas son "sabe leer" con 0.0293 y no tiene religión con un 6.29e-07, debido a que muestran resultados menores a 0.05.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+modelsQP_BN=list( 'Binomial Negativa- Angelo)'=rbn)
+
+f <- function(x) format(x, digits = 4, scientific = FALSE)
+modelsummary(modelsQP_BN,fmt=f,
+             exponentiate = T, 
+             statistic = 'conf.int',
+             title = "EXP() de la Binomial Negativa",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+En el presente modelo se ve que por cada unidad en la que aumente la tasa de las personas que tienen mayor preparación académica , es decir que saben leer, la cantidad esperada de votos hacia castillo se reduce en un 63.7% . De igual manera, por cada unidad de aumento en la tasa de personas que no profesan una religión, la cantidad de votos hacia castillo se reduce en 95%.
+
+### BINOMIAL - variables Majo
+
+A partir de la revisión biliográfica se sostiene que existen tres factores principales que podrían influir en el voto, si cuenta con acceso a Gas (balón GLP) -- "gas",Poblacion afiliada al Seguro Integral de Salud -- "sis" y si tiene acceso a educación -- "acsedu".
+
+La primera variable es *si cuenta con acceso a gas* esta variable fue pertinente para la investigación porque en el plan de gobierno presentado en la campaña presidencial se planteo cambios en el sector hidrocarburos, en especial en el tema del precio de los combustibles como lo pudo ser el gas de Camisea, no obstante, a pesar de tener yacimientos , no opera hacia las provincias vecinas ni brinda combustible casero al no haber tuberias. Por esa misma razon, las familias prefieren optar por algo mas accesible como lo es el balon de gas GLP. Si bien el precio de este no era barato (en algunos sectores bordeaba los 60 soles por balon), Pedro Castillo prometio bajar su precio entre 9 a 11 soles menos para asi hacerlo mas comodo al bolsillo de la poblacion tanto urbana como rural.
+
+La segunda variable es si la *poblacion esta afiliada al Seguro Integral de Salud* esta variable fue pertinente porque fue otra de las propuestas de campaña de Pedro Castillo. Si bien conocemos la precariedad del sector salud peruano, demostrado con creces en el contexto del covid19 (el cual seguia en periodo electoral), este nuevo personaje en la politica se comprometio al mejoramiento del servicio, ya que la salud es un derecho de todos por lo que todos deberiamos acceder a el sin ningun problema. Por ello, seria interesante saber cuantas personas integradas al SIS confiaron en las promesas de Peru Libre y votaron por ese partido en las elecciones presidenciales.
+
+La tercera variable es *si tiene acceso a educacion* esta fue pertinenete pues se planteó la masificación de los centros educativos a lo largo del país bajo el argumento que la educacion es un derecho al que todos los peruanos debemos acceder, asi se trate de un colegio, instituto o universidad. Esta promesa fue muy controversial puesto que significo el ingreso fijo a universidades nacionales, pero tambien apoyada por un gran sector que consideraba que la educacion no deberia ser un privileguio. Dicho esto, podriamos averiguar si los votos a Pedro Castillo se vieron influencados por votos a favor de la educacion descentralizada y masificada
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+library(modelsummary)
+h2off=formula(votoscas~gas + sis + acsedu + offset(log(electores)))
+rbn2=MASS::glm.nb(h2off,data=cleandata)
+summary(rbn2)
+```
+
+A partir de la regresión podemos ver que la única variable significativa es si la persona tiene acceso a educación (si asiste a algún instituto, colegio o universidad) con 0.00723. Vemos también que contar con gas en casa o estar afiliado a algún seguro no tiene significancia (pues es mayor a 0.05).
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+modelsQP_BN=list( 'Binomial Negativa- Majo)'=rbn2)
+
+f <- function(x) format(x, digits = 4, scientific = FALSE)
+modelsummary(modelsQP_BN,fmt=f,
+             exponentiate = T, 
+             statistic = 'conf.int',
+             title = "EXP() de la Binomial Negativa",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+Así, para este modelo se ve que por cada unidad en que aumente la tasa de acceso a educación la cantidad esperada votos hacia Castillo se reduce en un en un 79.8%. Podemos decir entonces que el pertenecer a un instituto o universidad es un factor que influencia posiblemente en el anti-voto hacia el Candidato Castillo.
+
+Se logro observar,entonces,  que los votos hacia Pedro Castillo en la segunda vuelta se ven reducidos en 79% si el votante cuenta con acceso a educacion, es decir, si asiste a un instituto o universidad. Esto se puede explicar con que la mayor concentracion del rubro educacion se encuentra en las regiones costeras (desde la mayor cantidad de colegios hasta las principales universidades nacionales y privadas), las cuales segun el grafico de calor del inicio, son las que menos votaron por Pedro Castillo. Debemos de tomar en cuenta que en las regiones rurales, las cuales votaron por el partido Peru Libre, son aquellas que no cuentan con acceso a este recurso basico, lo cual habria generado alta insatisfaccion social entre estos sectores, dandole su voto a alguien que prometia aumentar el presupuesto hacia la educacion
+
+Por otro lado, contar con gas GLP en casa o estar afiliado al seguro de salud no presenta significancia al ser mayor a 0.05.
+
+### BINOMIAL - variables Maria
+
+A partir de la revisión biliográfica se sostiene que existen tres factores principales que podrían influir en el voto, Etnicidad, acceso al agua y alumbrado eléctrico.
+
+La primera variable es *etnicidad* , esta es una variable socio-demográfica y medirá el número de personas que tiene lengua materna indígena. Esta ya ha sido considerada en estudios previos sobre elecciones por los autores Sulmont, Ames y Ponce de León. La elección de esta variable responde a que muestra la cantidad de población que tiene tradición indígena, así mismo lo indígena ha estado asociado a carencias sociales y económica, y a discriminación y exclusión social (presentes durante la campaña electoral)
+
+La segunda variable es el *acceso al agua* (servicio público) el no tener acceso al agua correspondería a una necesidad básica insatisfecha (NBI) lo que también influye en la decisión electoral. Debido a que puede existir un mayor descontento social en los sectores que presentan un NBI. Sin embargo, en este caso queremos demostrar que el voto hacia Castillo no solo se dio por parte de la población insatisfecha sino estuvo más influenciado por un anti-voto hacia la candidata con la que disputaba la presidencia.
+
+La tercera variable es el *alumbrado eléctrico*, este es un servicio público necesario, que al igual que el anterior ha estado ligado a un abandono por parte del Estado lo que conlleva al descontento de la población . Sin embargo, creemos que no es una variable tan significativa al momento de la segunda vuelta electoral debido a que esta tuvo muy presente las luchas entre la "izquierda" y la "derecha", por lo que posiblemente la contienda va más allás de las variables sociodemográficas a un tema de representatividad y legitimidad.
+
+Entonces decimos que el alumbrado electrico y el acceso al agua son significativos en el voto hacia el candidato  Castillo debido a que en la segunda vuelta elctoral no solo estuvo presente las identificaciones con el candidato o variables socio-demográficas sino que hubo una gran presencia del anti-voto hacia el fujimorismo que estuvo respaldado a partir de votantes con diferentes ingresos económicos.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+library(modelsummary)
+h2off=formula(votoscas~agua + alumbrado + etniticidad + offset(log(electores)))
+rbn1=MASS::glm.nb(h2off,data=cleandata)
+summary(rbn1)
+```
+
+Como vemos a partir de la regresión las variables significativas son el tener acceso al agua con 0.00292 , el tener alumbrado eléctrico con 0.00741 y si pertenece a algún grupo étnico con 2e-16.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+modelsQP_BN=list( 'Binomial Negativa- Maria)'=rbn1)
+
+f <- function(x) format(x, digits = 4, scientific = FALSE)
+modelsummary(modelsQP_BN,fmt=f,
+             exponentiate = T, 
+             statistic = 'conf.int',
+             title = "EXP() de la Binomial Negativa",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+Para este modelo se ve que por cada unidad en que aumente la tasa de viviendas con acceso al agua la cantidad esperada de votos hacia Castillo se multiplica por 1.51, es decir aumenta en un 51%. Podemos decir entonces que el tener acceso al agua potable tiene influencia positiva en los votos hacia Castillo. Esto quiere decir que la población con algunos recursos si opto por ser respresentado por un presidente de "izquierda" . Siguiendo esta idea el aumento en la tasa de las viviendad que cuentan con alumbrado eléctrico multiplica en 1.47 los votos hacia castillo, es decir aumenta en un 47%. Por último, el aumento de una unidad en la tasa de etnicidad aumenta el voto hacia Castillo en casi 99%. La variable etnicidad mide el número de personas que tiene lengua materna indígena, el candidato Castillo tuvo una campaña dirigida a grupos etnicos pertenecientes a la selva y sierra del Perú. Además la campaña electoral de la candidata opositora estuvo ligado a discriminación y exclusión social. Por lo que esto podría explicar el gran aumento de votos al utilizar esta variable social.
+
+### BINOMIAL - Todas las variables
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(knitr)
+library(modelsummary)
+h2off=formula(votoscas~gas + sis + acsedu + poblacionjoven + sabeleer + noTieneRel + agua + alumbrado + etniticidad + offset(log(electores)))
+rbn3=MASS::glm.nb(h2off,data=cleandata)
+summary(rbn3)
+```
+
+Cuando agregamos todas las variables a un solo modelo vemos que hay algunos cambios cambios. Pues saber leer ( 0.84369) y no tener religión (0.39041) ahora no son significativas , mientras que pertenecer a la población joven se volvió significativa con un 0.00301. Por otro, lado las otras variables se mantienen constantes en su significancia.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+modelsQP_BN=list( 'Binomial Negativa- General)'=rbn3)
+
+f <- function(x) format(x, digits = 4, scientific = FALSE)
+modelsummary(modelsQP_BN,fmt=f,
+             exponentiate = T, 
+             statistic = 'conf.int',
+             title = "EXP() de la Binomial Negativa",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+Manteniendo como offset al general de electores obtenemos los siguientes resultados de la regresión general de todas las variables presentadas en este trabajo. Vemos que el aumento en una unidad en la tasa de personas con acceso a educación reduce el voto hacia Castillo es un 16% ,por otro lado el aumento de una unidad en la tasa de hogares que tienen acceso al algua potable aumenta en 50% en los votos hacia el candidato Castillo . Por último, el aumento de una unidad en la tasa de personas que hablan lenguas indígenas aumenta el voto hacia castillo es un 89%.
+
+## Analisis Factorial Exploratorio (EFA)
+
+El análisis factorial exploratorio (Watkins 2018), como su nombre indica, explora la data y nos entrega posibles factores que resúmen cada uno un conjunto de variables.
+
+Veamos los pasos que el EFA requiere:
+
+1.  Subsetear la data
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+dontselect=c("prov", "votoscas","electores", "porcentaje")
+select=setdiff(names(cleandata), dontselect)
+EFA=cleandata[,select]
+```
+
+2.  Calculo de matriz de correlacion
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(polycor)
+corMatrix=polycor::hetcor(EFA)$correlations
+```
+
+3.  Exploramos la matriz de correlación
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(ggcorrplot)
+ggcorrplot(corMatrix)
+```
+Podemos ver niveles de correlación altos por diferentes bloques como el  saber leer con el tener acceso a gas, que tiene una correlación positiva directa y el estar afiliado al seguro integral de salud con tener gas en casa qur una correlación indirecta  fuerte. Estas variables parecen tener mayor correlación respecto al resto.
+
+4.  Verificar si los datos permiten factorizar:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(psych)
+psych::KMO(corMatrix)
+```
+
+Al observar el Overall es de 0.72 (debe ser mayor a 0.6 para ser aceptable ) por lo que es un valor adecuado para seguir haciendo un análisis factorial exploratorio. Podemos ver también que las variables que bajan de 0.6 son el acceso a educación, etnicidad, acceso al agua, no tener religión y etnicidad. Probablemente estas variables representen un problema , pues probablemnete pueden no llegar a ayudar al análisis
+
+5.  Verificar si la matriz de correlaciones es adecuada
+
+H0= Matriz identidad H0= Matriz nula
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+cortest.bartlett(corMatrix,n=nrow(EFA))$p.value>0.05
+
+library(matrixcalc)
+is.singular.matrix(corMatrix)
+
+```
+
+Buscamos no tener una matriz identidad, ni una matriz singular. Como se ha verificado la prueba de la matriz de identidad y singular son falsas por lo que procedemos a seguir con el análisis.
+
+6.  Determinar en cuantos factores o variables latentes podríamos redimensionar la data:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+fa.parallel(EFA, fa = 'fa',correct = T,plot = F)
+```
+
+Nos sugiere redimensionar en 4 números de factores de los 9 que se han presentado. Es decir, Nos dice que el número de nueve dimensiones se puede representar en cuatro.
+
+7.  Redimensionar a número menor de factores
+
+-   Resultado inicial
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(GPArotation)
+resfa <- fa(EFA,
+            nfactors = 4,
+            cor = 'mixed',
+            rotate = "varimax",
+            fm="minres")
+print(resfa$loadings)
+```
+
+-   Resultado mejorado:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+print(resfa$loadings,cutoff = 0.5)
+```
+Vemos que la estructura no es simpre porque hay variables con  más de un factor.
+La varianza acumulada es de el 0.67 , esto quiere decir que hemos recuperado el 67% de información, en el proceso de pasarlo a cuatro dimensiones perdimos el 33% de información.
+Con resoecto a sabe leer nos quedaremos con el valor de MR1 , pues es el mayor. Mientras que no "no tiene religión " y el "acceso al agua" aparecen sin valores, posiblemente porque el código elimina los valores menores a 0.5. 
+
+
+### Resultado visual del Analisis Factorial
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+fa.diagram(resfa,main = "Resultados del EFA")
+```
+
+Todas superan el 0.5 excepto no tener religión que solo llega al 0.4
+
+8.  Evaluando Resultado obtenido:
+
+-   Qué variables aportaron mas a los factores?
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+sort(resfa$communality)
+```
+
+De las variables que tengo, cuáles de estas han contribuido para formar las cuatro dimensiones.Las que están construyendo de manera fuerte son población joven , tener acceso a gas (0.87057864) , estar afiliado a un sistema de seguro(0.85612906 ), saber leer , contar con alumbrado electrico ( 1.00332094 ) y etnicidad (1.01069480). Mientas que las que son más débiles son no tener religión (0.23250555), tener acceso a agua potable (0.08136331) y tener acceso a la educación con (0.41044967). Estan son las que menso contribuyen.
+
+-   ¿Qué variables contribuyen a más de un factor?
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+sort(resfa$complexity)
+```
+
+Se busca que las variables estén cerca a uno. A partir de los resutados podemos ver como acceso a la educación y población joven son las variables que mejor miden los votos hacia Castillo . A diferencia vemos que saber leer es una de las que más está alejada (2.440117), es decir se acerca a dos factores.
+
+9.  Valores proyectados: Podemos calcular dos indices que resuman los dos factores encontrados.
+
+```{r, echo=FALSE}
+library(magrittr)
+as.data.frame(resfa$scores)%>%head()
+```
+
+Pedimos el score , observamps que hay pocos valores negativos
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+cleandata$uno_efa=resfa$scores[,1]
+cleandata$dos_efa=resfa$scores[,2]
+cleandata$tres_efa=resfa$scores[,3]
+cleandata$tres_efa=resfa$scores[,4]
+
+ggplot(data=cleandata,aes(x=electores,y=uno_efa)) + geom_point() + theme_minimal() + labs(x="original", y="EFA")
+```
+
+Se calcula el índice EFA, vemos que los valores están alineados entre el -1.8157478 y el 1.7449236 junto a puntos atípicos. Lo que se está observando es la gráfica de la tabla score presetando arriba.
+Al ver que el grafico de dispersiòn de concentra en el cero y en los negtivos, podemos decir que el  efecto de las variables no solo son negativas sino que se concentra en el medio de una distribucion.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(BBmisc)
+boxplot(normalize(cleandata[,c(2:10)],method='range',range=c(0,10)))
+```
+
+#### Correlacion
+Vemos que la correlación fuerte  y directa esta entre tener alumbrado electricco y tener acceso a gas (0.654152071) , también con la población joven y el acceso a gas(0.6260918). Mientras que las indirectas más fuertes están entre saber leer y estar afiliado a un seguro de salud (-0.83208283) y tener un seguro de salud con tener acceso a gas (-0.8412893)
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+cor(cleandata[,c(2:10)])
+```
+
+#### Preparacion de datos para la clusterizacion
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+dataClus=cleandata[,c(2:10)]
+row.names(dataClus)=cleandata$prov
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(cluster)
+g.dist = daisy(dataClus, metric="gower")
+```
+
+## Clusterizacion via PAM
+
+Conocido como *Partitioning Around Medoids*, usado para agrupar k-medoids. Este metodo de clusterizacion se basa en la busqueda de *k medoids* representativos entre las observaciones del conjunto de datos, para luego construir grupos asignando cada observacion al medoid mas cercano.
+
+Asi mismo, se requiere que se indique el numero apropiado de clusters que se van a producir, siendo una alternativa solida para dividir las provincias en grupos de observacion
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(factoextra)
+fviz_nbclust(dataClus, pam,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F)
+```
+
+Nos muestra que lo óptimo es aglomerar a partir de tres clusters
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+set.seed(123)
+res.pam=pam(g.dist,3,cluster.only = F)
+
+#nueva columna
+dataClus$pam=res.pam$cluster
+
+# ver
+library(kableExtra)
+head(dataClus,15)%>%kbl()%>%kable_styling()
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+fviz_silhouette(res.pam,print.summary = F)
+```
+
+#### Figura : Evaluando los resultados del PAM 
+
+Los casos que superen la barra roja (0.5) son aquellos en donde la pertenencia al cluster es más evidente, mientras más baja la barra (caso) es menos probable que guarde similitudes con el resto de casos del subgrupo, vemos que la barra esta llegando casi a 0.28. Los que están por debajo del 0 son los mal clusterizados. Esto quiere decir que estos casos son aquellos que no pertenecerían a ningun grupo, pero que igualmente son forzados a ser parte de alguno porque guardan una característica común. Esa característica común en el caso azul es la más representativa a nivel poblacional porque es más grande y sobrepasa la media 0.28, ademàs de ser robusta. A diferencia del rojo que está por debajo, aunque es robusto, es decir su representación es grande pero opuesta a lo esperado en la sociedad. Mientras el verde es pequeño pero si pasa la media.
+
+A continuación veremos las provencias mal clusterizadas, y vemos que hay 13:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+silPAM=data.frame(res.pam$silinfo$widths)
+silPAM$prov=row.names(silPAM)
+elecPAM=silPAM[silPAM$sil_width<0,'prov']%>%sort()
+elecPAM
+```
+
+Exploremos el promedio de cada cluster:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+aggregate(.~ pam, data=dataClus,mean)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+cleandata$pamCleanElec=cleandata$prov%in%elecPAM
+cleandata$pamClean=as.ordered(dataClus$pam)
+dataClus$pam=NULL
+```
+
+## Clusterizacion via AGNES
+
+Tambien llamada *Agglomerative Nesting*, se usa para agrupar objetos en clusteres en funcion a su similitud, tratando a cada objeto como grupo unico (leaf), combinando los mas similares hasta que todos los puntos son miembros de un solo grupo grande (root).
+
+Para ello, los datos deber ser una matriz numerica con filas que en este caso representan las provincias, y las columnas que representan variables
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+fviz_nbclust(dataClus, hcut,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F,hc_func = "agnes")
+```
+
+```{r, echo=FALSE}
+set.seed(123)
+library(factoextra)
+
+res.agnes<- hcut(g.dist, k = 3,hc_func='agnes',hc_method = "ward.D")
+
+dataClus$agnes=res.agnes$cluster
+
+# ver
+
+head(dataClus,15)%>%kbl()%>%kable_styling()
+```
+
+En este dendrograma podemos apreciar que las provincias que son similares se combinan entre si en *branches* que a su vez se fusionan entre si hasta formar uno solo. Si lo vieramos de forma vertical, la altura de fusion indicaria la distancia entre dos grupos, en donde cuando mayor sea esta, es porque las provincias son menos similares
+
+El dendograma de la Figura 3.4 nos muestra el proceso de conglomeración AGNES:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+fviz_dend(res.agnes, cex = 0.4, horiz = T,main = "")
+```
+
+#### Figure 3.4: Dendograma de AGNES
+
+El eje ‘Height’ nos muestra el “costo” de conglomerar: mientras más corta la distancia mayor similitud y la conglomeracion es más rápida.
+
+Podemos ver que de las provincias del grupo de azul Sechura y Yauyos son similares, así como Tocache y Chota, pertenecientes al grupo verde. Por último del grupo rojo Abancay y Cabgallo también tienen similitud.
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+fviz_silhouette(res.agnes,print.summary = F)
+```
+
+Como podemos ver el cluster 1 presenta una mayor probabilidad ha estar por debajo de la media (poblacional o muestral). Mientras que los otros grupos, sobrepasan la media lo que asegura que pueden tener una mejor representación a nivel muestral. Pero, en si los clusters 2 y 3 son mas pequeños comparados al rojo. Lo que diría que pueden ser representativos pero no completamente reflejan la realidad total
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+silAGNES=data.frame(res.agnes$silinfo$widths)
+silAGNES$prov=row.names(silAGNES)
+elecAGNES=silAGNES[silAGNES$sil_width<0,'prov']%>%sort()
+elecAGNES
+```
+
+En este caso a diferencia del PAM tenemos 16 valores mal clausterizados 
+
+```{r, echo=FALSE}
+aggregate(.~ agnes, data=dataClus,mean)
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+cleandata$agnesCleanElec=cleandata$prov%in%elecAGNES
+cleandata$agnesClean=as.ordered(dataClus$agnes)
+dataClus$agnes=NULL
+```
+
+#### Comparando
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+table(cleandata$pamClean,cleandata$agnesClean,dnn = c('Particion','Aglomeracion'))
+```
+
+## Visualizacion comparativa
+Vamos a usar la matriz de distancia para darle a cada provincia una coordenada, tal que la distancia entre estos se refleje en sus posiciones
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+proyeccion = cmdscale(g.dist, k=2,add = T) 
+head(proyeccion$points,20)
+```
+Acá podemos ver el mapa:
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+cleandata$dim1 <- proyeccion$points[,1]
+cleandata$dim2 <- proyeccion$points[,2]
+```
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(ggrepel)
+base= ggplot(cleandata,aes(x=dim1, y=dim2,label=row.names(dataClus))) 
+base + geom_text_repel(size=1.5, max.overlaps = 50,min.segment.length = unit(0, 'lines'))
+```
+
+### Grafica de PAM
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# solo provincias mal clusterizadas
+PAMlabels=ifelse(cleandata$pamCleanElec,cleandata$prov,'')
+
+#base
+base= ggplot(cleandata,aes(x=dim1, y=dim2))  +
+    scale_color_brewer(type = 'qual',palette ='Dark2'  ) + labs(subtitle = "Se destacan las provincias mal clusterizadas")
+
+pamPlot=base + geom_point(size=2, 
+                          aes(color=pamClean))  + 
+        labs(title = "PAM") 
+# hacer notorios las provincias mal clusterizadas
+pamPlot + geom_text_repel(size=2,
+                          aes(label=PAMlabels),
+                          max.overlaps = 50,
+                          min.segment.length = unit(0, 'lines'))
+```
+
+Figure 4.1: Conglomerados PAM en Mapa Bidimensonal de provincias
+
+
+
+### Grafica de AGNES
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+# solo paises mal clusterizados
+AGNESlabels=ifelse(cleandata$agnesCleanElec,cleandata$prov,'')
+
+agnesPlot=base + geom_point(size=2, 
+                            aes(color=as.factor(agnesClean))) +
+          labs(title = "AGNES") 
+# hacer notorios las provincias mal clusterizadas
+agnesPlot + geom_text_repel(size=2,
+                            aes(label=AGNESlabels),
+                            max.overlaps = 50,
+                            min.segment.length = unit(0, 'lines'))
+```
+
+Figure 4.2: Conglomerados AGNES en Mapa Bidimensonal de provincias.
+Por lo que vemos el conglomerado AGNES presenta mayor numero de casos atípicos que el PAM.
+
+
+
+## Conclusiones 
+
+A partir de la regresión binomial negativa vemos que nuestra hipótesis planteada es confirmada parcialmente pues solo algunas de nuestras variables son significativas en las regresiones. Con lo que respecta a las 
+regresiones personales en las que se mantiene como offset a los electores. Vemos que en la primera regresión (rbn) solo son significativas la educación (el saber leer) y el no tener una religión, a partir de la primera el voto a Castillo se reduce (en 63.7% y 95% correspondientemente). Entonces, no se confirman las hipótesis personales sobre que las personas religiosas tienden a tener una postura más de derecha y que las personas instruidas tienden a votar por un candidato de izquierda, pues no hay un aumento en el voto hacia castillo sino una reducción. Probablemente sea debido a que durante la campaña electoral el candidato Castillo también se catalogó como una persona creyente y evangélica. Por lo que esperamos que esta variable sea estudiada en el futuro.
+
+Para la segunda regresión (rbn2) solo es significativa la variable de acceso a la educación (si asiste a un instituto, colegio o universidad), a partir de ella vemos que el aumento en la tasa de educación reduce los votos hacia el candidato Castillo en 79.8%, podemos ver una similitud con la hipótesis anterior en que las personas que más ingreso al sistema educativo tienen tienden a votar menos por el presidente catalogado de "izquierda". Se tiende a explicar que esto se debe a que la mayor concentración de los colegios se encuentra en la zona costera mientras que la mayoría de votos pertenece a la zona de la sierra y selva. Esto va a acorde a la hipótesis personal que planteaba que al no contar las regiones rurales con acceso a una educación de calidad generaría alta insatisfacción social entre estos sectores, llevando el voto hacia alguien que prometía aumentar el presupuesto hacia la educación
+
+Para la tercera regresión (rbn1) las tres variables, acceso a agua potable, el alumbrado eléctrico y la etnicidad son significativas (hay un aumento del 51%, 47% y 99% respectivamente). Vemos entonces corroboradas las hipótesis personales sobre que la población con recursos si optó por ser representado por un presidente de "izquierda" y con tintes populistas, esto posiblemente debido al gran anti-voto que había durante las elecciones hacia el fujimorismo. Por otro lado, el hablar alguna lengua nativa también tuvo un efecto positivo hacia el voto, debido a que como se mostró en el mapa las personas que más votaron por este candidato se situaban en la sierra y selva peruana. El aumento de voto puede ser debido a que el candidato se catalogaba a sí mismo como un representante de las minorías étnicas y tuvo una campaña electoral basada en esta premisa. Esperamos que esta investigación se extienda para estudiar el comportamiento de los votantes. 
+
+Con lo que respecta al análisis factorial tenemos en cuenta que se conformaron cuatro factores, observamos la configuración de las correlaciones dentro de un conjunto de variables observadas. Y llegamos a la conclusión de que construyendo de manera fuerte son población joven, tener acceso a gas (0.87057864), estar afiliado a un sistema de seguro (0.85612906), saber leer, contar con alumbrado eléctrico (1.00332094) y etnicidad (1.01069480). Mientas que las que son más débiles, las que menos contribuyen son no tener religión (0.23250555), tener acceso a agua potable (0.08136331) y tener acceso a la educación con (0.41044967). 
+También vemos que acceso a la educación y población joven son las variables que mejor miden los votos hacia Castillo.
+
+Sin embargo, a partir del gráfico vemos que etnicidad y alumbrado aparecen como variables relevantes en la conformación de factores. Por último, Con lo que respecta a conglomerados PAM tiene menos caso mal clusterizados que AGNES. Podemos decir que la realidad total esta mejor representada por los conglomerados de PAM. Además, se categorizó a las provincias de acuerdo a las características comunes. Por ejemplo, Sechura y Yauyos, así como Tocache y Chota, y Abancay y Cangallo.
+
+
+### Anexos y Referencias
+
+- https://censos2017.inei.gob.pe/redatam/
+- https://www.onpe.gob.pe/elecciones/2021/EEGG/
+- http://sige.inei.gob.pe/test/atlas/
+
